@@ -11,12 +11,28 @@ ENV/
 *.egg-info/
 dist/
 build/
-.eggs/
+*.egg
+*.whl
+
+# Backend
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+*.tsbuildinfo
 
 # Environment
 .env
 .env.local
 .env.production
+.env.example
 
 # IDE
 .idea/
@@ -24,6 +40,7 @@ build/
 *.swp
 *.swo
 .DS_Store
+Thumbs.db
 
 # Testing
 .pytest_cache/
@@ -35,11 +52,21 @@ htmlcov/
 *.log
 logs/
 
-# Temporary files
+# Temporary
 tmp/
 temp/
 uploads/
 *.tmp
+*.temp
 
 # Docker
 .dockerignore
+
+# Build artifacts
+*.manifest
+*.lock
+
+# Misc
+*.bak
+*.swp
+.cache/

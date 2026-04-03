@@ -1,358 +1,351 @@
-# 🤖 AI-Powered Document Analysis & Extraction
+# 🏏 DocuLens AI
 
-> An intelligent document processing API that extracts, analyses, and summarises content from **PDF**, **DOCX**, and **image** files using state-of-the-art AI.
+> **Intelligent Document Analysis Platform** — Powered by RAG, Gemini AI, and Pinecone Vector Database
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](https://python.org)
-[![Claude AI](https://img.shields.io/badge/AI-Claude%20Sonnet-D97706?logo=anthropic)](https://anthropic.com)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [API Reference](#api-reference)
-- [Quick Start](#quick-start)
-- [Deployment](#deployment)
-- [Configuration](#configuration)
-- [Testing](#testing)
-- [Project Structure](#project-structure)
+![DocuLens AI](https://img.shields.io/badge/Version-3.0.0-D1122D?style=for-the-badge)
+![React](https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge)
+![Gemini](https://img.shields.io/badge/AI-Gemini-4285F4?style=for-the-badge&logo=google)
+![Pinecone](https://img.shields.io/badge/VectorDB-Pinecone-FF4D6D?style=for-the-badge)
 
 ---
 
-## Overview
+## 🎯 What is DocuLens AI?
 
-This API accepts documents in three formats and returns:
+DocuLens AI is a **production-ready document intelligence platform** that transforms how organizations interact with their documents. Upload any document, and get instant AI-powered insights through:
 
-| Output | Description |
-|--------|-------------|
-| **Summary** | Concise 2–4 sentence AI-generated summary |
-| **Entities** | People, orgs, locations, dates, monetary amounts, misc |
-| **Sentiment** | Positive / Negative / Neutral with confidence score |
-
-Powered by **Claude Sonnet** (Anthropic) for AI analysis, **PyMuPDF** for PDF parsing, **python-docx** for Word documents, and **Tesseract OCR** for images.
+- 💬 **Natural Language Q&A** with RAG-powered accuracy
+- 📊 **Multi-Document Synthesis** combining information from 100s of docs
+- ⚖️ **Document Comparison** finding similarities and conflicts
+- 🔍 **Intelligent Insight Extraction** - action items, deadlines, risks
 
 ---
 
-## Features
+## ✨ Features
 
-- ✅ **Multi-format support** — PDF, DOCX/DOC, JPG, PNG, TIFF, BMP, WEBP
-- ✅ **AI Summarisation** — Accurate, contextual summaries via Claude
-- ✅ **Named Entity Recognition** — 6 entity categories extracted
-- ✅ **Sentiment Analysis** — With confidence score + explanation
-- ✅ **OCR for images** — Tesseract with preprocessing + EasyOCR fallback
-- ✅ **Layout preservation** — Headings, tables, and structure retained
-- ✅ **Dual authentication** — `X-API-Key` header or `Authorization: Bearer`
-- ✅ **Async processing** — Non-blocking I/O for high throughput
-- ✅ **Interactive demo UI** — Available at `/demo`
-- ✅ **Auto-generated docs** — Swagger UI at `/docs`
-- ✅ **Docker-ready** — Production Dockerfile included
-- ✅ **Render-ready** — `render.yaml` for one-click deploy
+### Core Capabilities
+
+| Feature | Description |
+|---------|-------------|
+| **RAG Q&A** | Ask questions in natural language, get answers with source citations |
+| **Semantic Search** | Find content by meaning, not just keywords |
+| **Multi-Document Synthesis** | Combine insights from multiple documents |
+| **Document Comparison** | Side-by-side analysis with similarity metrics |
+| **Insight Extraction** | Auto-extract action items, decisions, deadlines, risks |
+| **Real-time Streaming** | Watch AI generate responses in real-time |
+
+### Supported Formats
+
+- 📄 PDF documents
+- 📝 Microsoft Word (DOCX)
+- 📃 Plain text (TXT)
+- 🖼️ Images with OCR (PNG, JPG)
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  FastAPI Server                  │
-│                                                 │
-│  POST /api/v1/analyze                           │
-│       │                                         │
-│       ▼                                         │
-│  ┌────────────┐   ┌──────────────────────────┐  │
-│  │   Auth     │   │    File Validator         │  │
-│  │ Middleware │──▶│  (MIME + size check)      │  │
-│  └────────────┘   └──────────┬───────────────┘  │
-│                              │                  │
-│              ┌───────────────┼────────────────┐ │
-│              ▼               ▼                ▼ │
-│        ┌──────────┐  ┌──────────┐  ┌────────┐  │
-│        │  PDF     │  │  DOCX    │  │ Image  │  │
-│        │ PyMuPDF  │  │python-   │  │Tesser- │  │
-│        │pdfplumber│  │  docx    │  │  act   │  │
-│        └────┬─────┘  └────┬─────┘  └───┬────┘  │
-│             └─────────────┴────────────┘        │
-│                           │                     │
-│                    Extracted Text                │
-│                           │                     │
-│                           ▼                     │
-│                  ┌─────────────────┐            │
-│                  │  Claude Sonnet  │            │
-│                  │  AI Analysis    │            │
-│                  │  - Summary      │            │
-│                  │  - Entities     │            │
-│                  │  - Sentiment    │            │
-│                  └────────┬────────┘            │
-│                           │                     │
-│                    JSON Response                 │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         Frontend (React)                         │
+│  Dashboard │ Documents │ Chat │ Analysis │ Settings                │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ REST API
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Backend (FastAPI)                           │
+├─────────────────────────────────────────────────────────────────┤
+│  Documents API │ RAG API │ Analysis API                          │
+├─────────────────────────────────────────────────────────────────┤
+│  Services Layer                                                 │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │
+│  │ Document │ │ Vector   │ │ Embedding│ │ LLM      │          │
+│  │ Service  │ │ Store    │ │ Service  │ │ Service  │          │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+          ┌─────────────────┼─────────────────┐
+          ▼                 ▼                   ▼
+   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+   │  Pinecone   │   │   Gemini    │   │   Redis     │
+   │  (Vectors)  │   │   (LLM)    │   │   (Cache)   │
+   └─────────────┘   └─────────────┘   └─────────────┘
 ```
 
 ---
 
-## API Reference
+## 🚀 Quick Start
 
-### `POST /api/v1/analyze`
+### Prerequisites
+- Node.js 18+
+- Python 3.11+
+- API Keys:
+  - [Gemini API Key](https://makersuite.google.com/app/apikey)
+  - [Pinecone API Key](https://app.pinecone.io/)
 
-Analyse a document and return AI-generated insights.
+### 1. Clone & Setup
 
-**Authentication:** Required via `X-API-Key` header or `Authorization: Bearer <token>`
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd document-analyzer
 
-#### Request
-
+# Configure backend environment
+cp backend/.env.example backend/.env
+# Edit backend/.env with your API keys:
+# GEMINI_API_KEY=your_gemini_key
+# PINECONE_API_KEY=your_pinecone_key
 ```
+
+### 2. Start with Docker (Recommended)
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+### 3. Manual Setup
+
+**Backend:**
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 📚 API Reference
+
+### Document Management
+
+```bash
+# Upload file
+POST /v1/documents/ingest/file
 Content-Type: multipart/form-data
-X-API-Key: your-api-key
+file: [your-document.pdf]
 
-file: <binary file>
-```
-
-#### Response `200 OK`
-
-```json
+# Ingest text
+POST /v1/documents/ingest
 {
-  "status": "success",
-  "filename": "annual_report.pdf",
-  "file_type": "pdf",
-  "word_count": 3842,
-  "summary": "This annual report outlines the company's financial performance for FY2024, highlighting a 23% revenue growth driven by expansion into Asian markets and a significant reduction in operational costs.",
-  "entities": {
-    "persons": ["John Smith", "Sarah Johnson"],
-    "organizations": ["Acme Corporation", "Goldman Sachs"],
-    "locations": ["New York", "Singapore", "London"],
-    "dates": ["Q3 2024", "January 15, 2024", "FY2024"],
-    "monetary_amounts": ["$4.2B", "$850,000", "€1.1M"],
-    "miscellaneous": ["Series B", "ISO 27001", "REST API"]
-  },
-  "sentiment": {
-    "label": "positive",
-    "score": 0.87,
-    "explanation": "The document highlights strong growth metrics, successful expansions, and positive financial outcomes."
-  },
-  "processing_time_ms": 2341.5
+  "text": "Document content...",
+  "filename": "document.txt"
 }
 ```
 
-#### Error Responses
-
-| Status | Description |
-|--------|-------------|
-| `400` | Invalid file type or empty file |
-| `401` | Missing or invalid API key |
-| `422` | No readable text found in document |
-| `500` | Internal processing error |
-
-#### cURL Example
+### RAG Q&A
 
 ```bash
-curl -X POST "https://your-api.onrender.com/api/v1/analyze" \
-  -H "X-API-Key: your-api-key-here" \
-  -F "file=@/path/to/document.pdf"
+# Ask a question
+POST /v1/rag/query
+{
+  "query": "What are the main contract terms?"
+}
 ```
 
-#### Python Example
+### Advanced Analysis
 
-```python
-import requests
+```bash
+# Synthesize multiple documents
+POST /v1/analysis/synthesize
+{
+  "query": "What are the common themes?"
+}
 
-url = "https://your-api.onrender.com/api/v1/analyze"
-headers = {"X-API-Key": "your-api-key-here"}
+# Compare two documents
+POST /v1/analysis/compare
+{
+  "document1_id": "doc_abc123",
+  "document2_id": "doc_xyz789"
+}
 
-with open("document.pdf", "rb") as f:
-    response = requests.post(url, headers=headers, files={"file": f})
-
-data = response.json()
-print("Summary:", data["summary"])
-print("Sentiment:", data["sentiment"]["label"])
-print("People:", data["entities"]["persons"])
+# Extract insights
+POST /v1/analysis/insights
+{
+  "document_id": "doc_abc123"
+}
 ```
 
 ---
 
-## Quick Start
+## 🧪 Tech Stack
 
-### Prerequisites
-
-- Python 3.11+
-- Tesseract OCR installed on your system
-- Anthropic API key
-
-### Local Setup
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/yourusername/document-analyzer.git
-cd document-analyzer
-
-# 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 3. Install Python dependencies
-pip install -r requirements.txt
-
-# 4. Install Tesseract OCR
-# Ubuntu/Debian:
-sudo apt-get install tesseract-ocr tesseract-ocr-eng libmagic1
-
-# macOS:
-brew install tesseract
-
-# Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki
-
-# 5. Configure environment
-cp .env.example .env
-# Edit .env with your ANTHROPIC_API_KEY and API_KEY
-
-# 6. Run the server
-uvicorn main:app --reload --port 8000
-```
-
-Visit:
-- **API:** http://localhost:8000/api/v1/analyze
-- **Demo UI:** http://localhost:8000/demo
-- **Docs:** http://localhost:8000/docs
+| Layer | Technology | Why? |
+|-------|------------|------|
+| **Frontend** | React + TypeScript | Type safety, component architecture |
+| **Styling** | TailwindCSS + Radix UI | Rapid development, accessible components |
+| **State** | Zustand | Simple, performant state management |
+| **Backend** | FastAPI | Async, Python, auto-docs |
+| **AI** | Google Gemini | Multimodal, cost-effective |
+| **Embeddings** | Gemini Embeddings | Consistent with LLM |
+| **Vector DB** | Pinecone | Serverless, scalable |
+| **Cache** | Redis | Sub-millisecond lookups |
+| **Deployment** | Docker | Consistent environments |
 
 ---
 
-## Deployment
+## 🎨 Design
 
-### Deploy to Render (Recommended — Free Tier)
-
-1. Push your code to GitHub
-2. Go to [render.com](https://render.com) → New → Web Service
-3. Connect your GitHub repository
-4. Render auto-detects `render.yaml`
-5. Set environment variables:
-   - `ANTHROPIC_API_KEY` → Your Claude API key
-   - `API_KEY` → Your chosen secret key
-6. Click **Deploy**
-
-Your live URL will be: `https://document-analyzer-xxxx.onrender.com`
-
-### Deploy with Docker
-
-```bash
-# Build image
-docker build -t document-analyzer .
-
-# Run container
-docker run -d \
-  -p 8000:8000 \
-  -e ANTHROPIC_API_KEY=your-key \
-  -e API_KEY=your-api-key \
-  --name document-analyzer \
-  document-analyzer
-
-# Using docker-compose
-docker-compose up -d
-```
-
-### Deploy to Railway
-
-```bash
-railway init
-railway add
-railway deploy
-# Set env vars in Railway dashboard
-```
+- **Theme**: Dark mode with RCB-inspired red accents
+- **Colors**:
+  - Primary: `#D1122D` (RCB Red)
+  - Background: `#0a0a0a` (Deep Black)
+  - Accents: Gradient effects and glow animations
+- **Typography**: Clean, modern sans-serif
+- **UX**: Intuitive navigation, real-time feedback
 
 ---
 
-## Configuration
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | ✅ Yes | Your Anthropic Claude API key |
-| `API_KEY` | ✅ Yes | Secret key to protect your endpoint |
-| `PORT` | No | Server port (default: `8000`) |
-| `LOG_LEVEL` | No | `DEBUG`, `INFO`, `WARNING` (default: `INFO`) |
-
-Generate a secure API key:
-```bash
-python -c "import secrets; print(secrets.token_hex(32))"
-```
-
----
-
-## Testing
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run with coverage report
-pytest tests/ -v --cov=. --cov-report=html
-
-# Run specific test class
-pytest tests/test_api.py::TestPDFAnalysis -v
-```
-
----
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 document-analyzer/
-├── main.py                    # FastAPI app entry point
-├── requirements.txt           # Python dependencies
-├── Dockerfile                 # Production Docker image
-├── docker-compose.yml         # Local development
-├── render.yaml                # Render.com deployment config
-├── .env.example               # Environment template
-├── pytest.ini                 # Test configuration
+├── backend/                    # FastAPI Backend
+│   ├── app/
+│   │   ├── api/v1/endpoints/  # API Routes
+│   │   │   ├── documents.py    # Document CRUD
+│   │   │   ├── rag.py         # RAG Q&A
+│   │   │   └── analysis.py    # Synthesis/Compare/Insights
+│   │   ├── core/              # Config, Security, Logging
+│   │   ├── models/            # Pydantic Schemas
+│   │   └── services/          # Business Logic
+│   │       ├── document/        # Document processing
+│   │       ├── vector/        # Pinecone integration
+│   │       ├── embedding/     # Gemini embeddings
+│   │       ├── llm/           # Gemini LLM
+│   │       └── cache/         # Redis caching
+│   └── requirements.txt
 │
-├── routers/
-│   └── analyze.py             # POST /api/v1/analyze endpoint
+├── frontend/                   # React Frontend
+│   ├── src/
+│   │   ├── components/        # Reusable UI components
+│   │   ├── pages/             # Page views
+│   │   │   ├── Dashboard.tsx  # Home with stats
+│   │   │   ├── Documents.tsx   # Upload & manage
+│   │   │   ├── Chat.tsx       # RAG Q&A interface
+│   │   │   ├── Analysis.tsx   # Advanced features
+│   │   │   └── Settings.tsx    # Configuration
+│   │   ├── services/          # API client
+│   │   ├── store/             # Zustand state
+│   │   └── types/             # TypeScript types
+│   └── package.json
 │
-├── services/
-│   ├── pdf_extractor.py       # PyMuPDF + pdfplumber
-│   ├── docx_extractor.py      # python-docx with table support
-│   ├── image_extractor.py     # Tesseract OCR + EasyOCR fallback
-│   └── ai_analyzer.py         # Claude AI: summary, entities, sentiment
-│
-├── models/
-│   └── schemas.py             # Pydantic request/response models
-│
-├── utils/
-│   ├── auth.py                # API key authentication
-│   ├── file_handler.py        # MIME detection, validation
-│   └── logger.py              # Centralized logging
-│
-├── static/
-│   └── index.html             # Interactive demo UI (/demo)
-│
-└── tests/
-    └── test_api.py            # Comprehensive test suite
+├── docker-compose.yml          # Full stack deployment
+└── README.md
 ```
 
 ---
 
-## AI Tools Used
+## 💡 Use Cases
 
-| Tool | Usage |
-|------|-------|
-| **Claude (Anthropic)** | Document summarisation, entity extraction, sentiment analysis |
-| **ChatGPT** | Architecture brainstorming and documentation drafting |
+### Legal
+- Contract review and comparison
+- Clause extraction and analysis
+- Risk identification
+
+### Business
+- Meeting notes summarization
+- Action item tracking
+- Multi-document synthesis
+
+### Research
+- Paper comparison
+- Literature review
+- Key finding extraction
+
+### Compliance
+- Policy comparison
+- Gap analysis
+- Audit trail generation
 
 ---
 
-## Scoring Alignment
+## 🔒 Security
 
-| Criteria | Implementation |
-|----------|---------------|
-| Summary (2pts/test) | Claude Sonnet generates accurate, concise summaries |
-| Entities (4pts/test) | 6-category NER: persons, orgs, locations, dates, money, misc |
-| Sentiment (4pts/test) | Positive/Negative/Neutral with confidence score |
-| Code Quality | Clean architecture, type hints, logging, error handling |
-| No Hardcoded Responses | All responses dynamically generated by AI |
+- API Key authentication
+- Rate limiting
+- Input validation
+- Secure secret management via environment variables
 
 ---
 
-## License
+## 📈 Performance
 
-MIT License — See [LICENSE](LICENSE) file.
+| Metric | Value |
+|--------|-------|
+| Document ingestion | ~1-2s per page |
+| Semantic search | <100ms |
+| RAG response | 2-5s |
+| Cache hit | <10ms |
+
+---
+
+## 🏆 Hackathon Highlights
+
+### What Makes Us Different
+
+1. **Production-Ready Architecture**
+   - Clean separation of concerns
+   - Microservices-ready structure
+   - Comprehensive error handling
+
+2. **Advanced AI Capabilities**
+   - RAG with citation tracking
+   - Multi-document reasoning
+   - Real-time streaming responses
+
+3. **Modern Tech Stack**
+   - Type-safe end-to-end (TypeScript + Python)
+   - Containerized deployment
+   - Scalable vector database
+
+4. **User Experience**
+   - Beautiful dark theme
+   - Real-time feedback
+   - Intuitive navigation
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google** for Gemini AI and embeddings
+- **Pinecone** for vector database infrastructure
+- **FastAPI** for the amazing Python framework
+- **React** for the frontend library
+
+---
+
+<div align="center">
+  <strong>Built with ❤️ for the GUVI Hackathon</strong>
+  <br>
+  <sub>DocuLens AI - Your Intelligent Document Companion</sub>
+</div>
