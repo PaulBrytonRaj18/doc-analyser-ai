@@ -1,6 +1,5 @@
 import axios from 'axios'
 import type {
-  Document,
   DocumentIngestResponse,
   RAGQueryRequest,
   RAGQueryResponse,
@@ -52,6 +51,56 @@ export const documentApi = {
 
   analyze: async (data: { text: string; document_id?: string }): Promise<Record<string, unknown>> => {
     const response = await api.post('/v1/documents/analyze', data)
+    return response.data
+  },
+}
+
+export const analyzeApi = {
+  analyzeFile: async (file: File): Promise<{
+    summary: string
+    entities: {
+      persons: string[]
+      organizations: string[]
+      dates: string[]
+      locations: string[]
+      monetary_values: string[]
+    }
+    sentiment: string
+    metadata: {
+      file_type: string
+      processing_time: string
+      num_pages: string
+    }
+  }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post('/v1/analyze', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+
+  analyzeText: async (text: string): Promise<{
+    summary: string
+    entities: {
+      persons: string[]
+      organizations: string[]
+      dates: string[]
+      locations: string[]
+      monetary_values: string[]
+    }
+    sentiment: string
+    metadata: {
+      file_type: string
+      processing_time: string
+      num_pages: string
+    }
+  }> => {
+    const formData = new FormData()
+    formData.append('text', text)
+    const response = await api.post('/v1/analyze/text', formData, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    })
     return response.data
   },
 }
