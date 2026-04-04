@@ -17,6 +17,26 @@ class DocumentIngestRequest(BaseModel):
     chunking_strategy: str = Field(default="recursive", description="Chunking strategy")
 
 
+# EntityExtraction and AnalysisMetadata are defined later but used in DocumentAnalysisResponse, so we define them here first to avoid circular references.
+
+class EntityExtraction(BaseModel):
+    persons: List[str] = Field(default_factory=list)
+    organizations: List[str] = Field(default_factory=list)
+    dates: List[str] = Field(default_factory=list)
+    locations: List[str] = Field(default_factory=list)
+    monetary_values: List[str] = Field(default_factory=list)
+
+
+class AnalysisMetadata(BaseModel):
+    file_type: str
+    processing_time: str
+    num_pages: Optional[str] = None
+
+
+class DocumentAnalyzeRequest(BaseModel):
+    query: Optional[str] = Field(None, description="Optional RAG query")
+
+
 class DocumentIngestResponse(BaseModel):
     status: str
     document_id: str
@@ -69,14 +89,12 @@ class DocumentAnalysisRequest(BaseModel):
 
 
 class DocumentAnalysisResponse(BaseModel):
-    status: str
+    status: str = Field(default="success")
     document_id: str
     summary: str
-    key_points: List[str]
-    document_type: str
-    entities: Dict[str, Any]
-    sentiment: Dict[str, Any]
-    word_count: int
+    entities: EntityExtraction
+    sentiment: str
+    metadata: AnalysisMetadata
 
 
 class RAGQueryRequest(BaseModel):
@@ -223,3 +241,5 @@ class HealthResponse(BaseModel):
     service: str
     version: str
     features: Dict[str, bool]
+
+

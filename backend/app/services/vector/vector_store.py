@@ -1,17 +1,31 @@
 """
-Vector Store Service - Pinecone Integration.
+Vector Store Service - Pinecone Integration (Optional).
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from typing import Optional, Any, List
 from uuid import uuid4
-
-from pinecone import Pinecone, ServerlessSpec
 
 from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+# Lazy import for optional dependencies
+_pinecone = None
+
+
+def _get_pinecone():
+    global _pinecone
+    if _pinecone is None:
+        try:
+            from pinecone import Pinecone, ServerlessSpec
+
+            _pinecone = (Pinecone, ServerlessSpec)
+        except ImportError:
+            logger.warning("Pinecone not installed. RAG features will be disabled.")
+            _pinecone = False
+    return _pinecone
 
 
 @dataclass
@@ -34,18 +48,35 @@ class VectorStoreService:
     """Pinecone vector database service."""
 
     def __init__(self):
-        self._client: Optional[Pinecone] = None
+        self._client = None
         self._index = None
         self._initialized = False
+        self._available = None
 
     @property
-    def client(self) -> Pinecone:
+    def is_available(self) -> bool:
+        if self._available is None:
+            pinecone_lib = _get_pinecone()
+            self._available = pinecone_lib is not False and bool(
+                settings.pinecone_api_key
+            )
+        return self._available
+
+    @property
+    def client(self):
+        if not self.is_available:
+            return None
         if self._client is None:
+            Pinecone, _ = _get_pinecone()
             self._client = Pinecone(api_key=settings.pinecone_api_key)
         return self._client
 
     def initialize(self, force_recreate: bool = False) -> bool:
         """Initialize or connect to Pinecone index."""
+        if not self.is_available:
+            logger.warning("Vector store not available. RAG features disabled.")
+            return False
+
         if self._initialized and not force_recreate:
             return True
 
@@ -72,6 +103,7 @@ class VectorStoreService:
     def _create_index(self) -> None:
         """Create a new Pinecone index."""
         dimension = self._get_embedding_dimension()
+        _, ServerlessSpec = _get_pinecone()
 
         self.client.create_index(
             name=settings.pinecone_index_name,
@@ -93,10 +125,12 @@ class VectorStoreService:
             return 1536
         return 384
 
-    def upsert_chunks(
-        self, chunks: list[DocumentChunk], namespace: str = ""
-    ) -> dict[str, int]:
+    def upsert_chunks(self, chunks: List[DocumentChunk], namespace: str = "") -> dict:
         """Insert document chunks into vector store."""
+        if not self.is_available:
+            logger.warning("Vector store not available, skipping upsert")
+            return {"success": 0, "failed": 0}
+
         if not self._index:
             self.initialize()
 
@@ -126,12 +160,15 @@ class VectorStoreService:
 
     def search_similar(
         self,
-        query_vector: list[float],
+        query_vector: List[float],
         top_k: int = 5,
         namespace: str = "",
         filters: Optional[dict] = None,
-    ) -> list[SearchResult]:
+    ) -> List[SearchResult]:
         """Search for similar vectors."""
+        if not self.is_available:
+            return []
+
         if not self._index:
             self.initialize()
 
@@ -161,6 +198,9 @@ class VectorStoreService:
 
     def delete_by_document_id(self, document_id: str, namespace: str = "") -> bool:
         """Delete all vectors for a document."""
+        if not self.is_available:
+            return False
+
         if not self._index:
             self.initialize()
 
@@ -176,6 +216,9 @@ class VectorStoreService:
 
     def delete_all(self, namespace: str = "") -> bool:
         """Delete all vectors in namespace."""
+        if not self.is_available:
+            return False
+
         if not self._index:
             self.initialize()
 
@@ -187,8 +230,11 @@ class VectorStoreService:
             logger.error(f"Failed to delete all vectors: {e}")
             return False
 
-    def get_statistics(self) -> dict[str, Any]:
+    def get_statistics(self) -> dict:
         """Get index statistics."""
+        if not self.is_available:
+            return {"total_vectors": 0, "dimension": 0, "index_full": False}
+
         if not self._index:
             self.initialize()
 

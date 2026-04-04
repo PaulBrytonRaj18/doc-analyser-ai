@@ -2,6 +2,8 @@
 Document Service - Processing and Chunking.
 """
 
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -9,14 +11,24 @@ from typing import Optional, Generator
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.services.vector.vector_store import (
-    DocumentChunk,
-    generate_document_id,
-    generate_chunk_id,
-)
-from app.services.embedding.embedding_service import embedding_service
 
 logger = get_logger(__name__)
+
+
+def _get_vector_store():
+    from app.services.vector.vector_store import (
+        DocumentChunk,
+        generate_document_id,
+        generate_chunk_id,
+    )
+
+    return DocumentChunk, generate_document_id, generate_chunk_id
+
+
+def _get_embedding_service():
+    from app.services.embedding.embedding_service import embedding_service
+
+    return embedding_service
 
 
 @dataclass
@@ -91,6 +103,7 @@ class DocumentChunker:
             raw_chunks = list(self._recursive_split(text))
 
         chunks = []
+        DocumentChunk, _, generate_chunk_id = _get_vector_store()
         for idx, (start, end, content) in enumerate(raw_chunks):
             if len(content) >= self.min_chunk_size:
                 chunk = DocumentChunk(
@@ -244,6 +257,8 @@ class DocumentService:
         chunking_strategy: str = "recursive",
     ) -> IngestionResult:
         """Process and ingest a document."""
+        _, generate_document_id, _ = _get_vector_store()
+        embedding_service = _get_embedding_service()
         from app.services.vector.vector_store import vector_store_service
 
         start_time = datetime.now()

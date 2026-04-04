@@ -1,43 +1,69 @@
 """
-Cache Service - Redis Integration.
+Cache Service - Redis Integration (Optional).
 """
 
 import json
 from typing import Any, Optional
-
-import redis
 
 from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# Lazy import for optional dependencies
+_redis = None
+
+
+def _get_redis():
+    global _redis
+    if _redis is None:
+        try:
+            import redis
+
+            _redis = redis
+        except ImportError:
+            logger.warning("Redis not installed. Using in-memory cache.")
+            _redis = False
+    return _redis
+
 
 class CacheService:
     """Redis cache service with fallback to in-memory."""
 
     def __init__(self):
-        self._redis_client: Optional[redis.Redis] = None
-        self._memory_cache: dict[str, Any] = {}
+        self._redis_client = None
+        self._memory_cache: dict = {}
         self._connected = False
+        self._checked = False
 
     @property
-    def redis_client(self) -> Optional[redis.Redis]:
-        if self._redis_client is None and settings.redis_enabled:
-            try:
-                self._redis_client = redis.from_url(
-                    settings.redis_url,
-                    decode_responses=True,
-                    socket_connect_timeout=5,
-                    socket_timeout=5,
-                )
-                self._redis_client.ping()
-                self._connected = True
-                logger.info("Redis cache connected")
-            except Exception as e:
-                logger.warning(f"Redis not available: {e}. Using in-memory cache.")
-                self._connected = False
-                self._redis_client = None
+    def redis_client(self):
+        if self._checked:
+            return self._redis_client
+
+        self._checked = True
+        if not settings.redis_enabled:
+            return None
+
+        redis_lib = _get_redis()
+        if not redis_lib:
+            return None
+
+        try:
+            self._redis_client = redis_lib.from_url(
+                settings.redis_url,
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5,
+            )
+            self._redis_client.ping()
+            self._connected = True
+            logger.info("Redis cache connected")
+        except Exception as e:
+            logger.warning(f"Redis not available: {e}. Using in-memory cache.")
+            self._connected = False
+            self._redis_client = None
+
         return self._redis_client
 
     def is_connected(self) -> bool:
@@ -61,94 +87,60 @@ class CacheService:
 
         return self._memory_cache.get(key)
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = 3600) -> bool:
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """Set value in cache."""
-        try:
-            serialized = json.dumps(value)
-
-            if self.redis_client:
+        if self.redis_client:
+            try:
+                serialized = json.dumps(value)
                 if ttl:
                     self.redis_client.setex(key, ttl, serialized)
                 else:
                     self.redis_client.set(key, serialized)
+                return True
+            except Exception as e:
+                logger.error(f"Redis set error: {e}")
 
-            self._memory_cache[key] = value
-            return True
-
-        except Exception as e:
-            logger.error(f"Cache set error: {e}")
-            self._memory_cache[key] = value
-            return True
+        self._memory_cache[key] = value
+        return True
 
     def delete(self, key: str) -> bool:
-        """Delete key from cache."""
-        try:
-            if self.redis_client:
+        """Delete value from cache."""
+        if self.redis_client:
+            try:
                 self.redis_client.delete(key)
-            self._memory_cache.pop(key, None)
-            return True
-        except Exception as e:
-            logger.error(f"Cache delete error: {e}")
-            return False
-
-    def exists(self, key: str) -> bool:
-        """Check if key exists."""
-        if self.redis_client:
-            try:
-                return bool(self.redis_client.exists(key))
+                return True
             except Exception as e:
-                logger.error(f"Cache exists error: {e}")
+                logger.error(f"Redis delete error: {e}")
 
-        return key in self._memory_cache
+        self._memory_cache.pop(key, None)
+        return True
 
-    def clear_pattern(self, pattern: str) -> int:
-        """Clear all keys matching pattern."""
-        count = 0
-        try:
-            if self.redis_client:
-                keys = self.redis_client.keys(pattern)
-                if keys:
-                    count = self.redis_client.delete(*keys)
-
-            keys_to_delete = [
-                k for k in self._memory_cache if pattern.replace("*", "") in k
-            ]
-            for k in keys_to_delete:
-                del self._memory_cache[k]
-                count += 1
-
-        except Exception as e:
-            logger.error(f"Cache clear pattern error: {e}")
-
-        return count
-
-    def clear_all(self) -> bool:
+    def clear(self) -> bool:
         """Clear all cache."""
-        try:
-            if self.redis_client:
-                self.redis_client.flushdb()
-            self._memory_cache.clear()
-            return True
-        except Exception as e:
-            logger.error(f"Cache clear all error: {e}")
-            return False
-
-    def get_stats(self) -> dict[str, Any]:
-        """Get cache statistics."""
-        stats = {
-            "memory_keys": len(self._memory_cache),
-            "redis_connected": self.is_connected(),
-        }
-
         if self.redis_client:
             try:
-                info = self.redis_client.info("memory")
-                stats["redis_memory"] = info.get("used_memory_human", "N/A")
-                stats["redis_keys"] = self.redis_client.dbsize()
+                self.redis_client.flushdb()
+                return True
             except Exception as e:
-                logger.error(f"Redis stats error: {e}")
+                logger.error(f"Redis clear error: {e}")
 
-        return stats
+        self._memory_cache.clear()
+        return True
+
+    def get_many(self, keys: list[str]) -> dict[str, Any]:
+        """Get multiple values from cache."""
+        result = {}
+        for key in keys:
+            value = self.get(key)
+            if value is not None:
+                result[key] = value
+        return result
+
+    def set_many(self, mapping: dict[str, Any], ttl: Optional[int] = None) -> bool:
+        """Set multiple values in cache."""
+        for key, value in mapping.items():
+            self.set(key, value, ttl)
+        return True
 
 
 cache_service = CacheService()

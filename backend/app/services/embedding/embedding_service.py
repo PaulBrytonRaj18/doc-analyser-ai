@@ -5,12 +5,19 @@ Embedding Service - Multi-Provider Support (Gemini, OpenAI, Local).
 import hashlib
 from typing import Optional
 
-import numpy as np
-
 from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+# Lazy import for optional dependencies
+try:
+    import numpy as np
+
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    logger.warning("NumPy not installed. Embedding features may be limited.")
 
 
 class EmbeddingService:
@@ -223,16 +230,23 @@ class EmbeddingService:
 
     def compute_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """Compute cosine similarity between two vectors."""
-        v1 = np.array(vec1)
-        v2 = np.array(vec2)
-
-        norm1 = np.linalg.norm(v1)
-        norm2 = np.linalg.norm(v2)
-
-        if norm1 == 0 or norm2 == 0:
+        if not NUMPY_AVAILABLE:
             return 0.0
+        try:
+            import numpy as np
 
-        return float(np.dot(v1, v2) / (norm1 * norm2))
+            v1 = np.array(vec1)
+            v2 = np.array(vec2)
+
+            norm1 = np.linalg.norm(v1)
+            norm2 = np.linalg.norm(v2)
+
+            if norm1 == 0 or norm2 == 0:
+                return 0.0
+
+            return float(np.dot(v1, v2) / (norm1 * norm2))
+        except Exception:
+            return 0.0
 
     def _get_cache_key(self, text: str) -> str:
         """Generate cache key for text."""

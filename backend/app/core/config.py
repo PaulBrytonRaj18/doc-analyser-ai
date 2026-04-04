@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "DocuLens AI"
-    app_version: str = "3.0.0"
+    app_version: str = "3.1.0"
     environment: str = "production"
     debug: bool = False
 
@@ -24,11 +24,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Security
-    api_key: str = ""
+    api_key: str = "dev-key"
     cors_origins: list[str] = ["*"]
 
     # Gemini AI
     gemini_api_key: str = ""
+    gemini_api_key_env: str = ""  # Alternative env var for google-generativeai
 
     # Vector Database (Pinecone)
     pinecone_api_key: str = ""

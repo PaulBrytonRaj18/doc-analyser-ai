@@ -2,6 +2,7 @@
 LLM Service - Gemini Integration.
 """
 
+import os
 from dataclasses import dataclass
 from typing import AsyncIterator, Optional
 
@@ -36,7 +37,14 @@ class LLMService:
             try:
                 import google.generativeai as genai
 
-                genai.configure(api_key=settings.gemini_api_key)
+                api_key = settings.gemini_api_key or os.environ.get(
+                    "GOOGLE_API_KEY", os.environ.get("GEMINI_API_KEY", "")
+                )
+                if not api_key:
+                    logger.warning("Gemini API key not configured")
+                    return None, None
+
+                genai.configure(api_key=api_key)
                 self._client = genai
                 self._model = genai.GenerativeModel("gemini-2.0-flash")
                 logger.info("Gemini client initialized")
@@ -65,11 +73,13 @@ class LLMService:
             }
 
             if system_instruction:
-                model = model.start()
-
-            response = await model.generate_content_async(
-                prompt, generation_config=generation_config
-            )
+                response = await model.generate_content_async(
+                    [system_instruction, prompt], generation_config=generation_config
+                )
+            else:
+                response = await model.generate_content_async(
+                    prompt, generation_config=generation_config
+                )
 
             return LLMResponse(
                 content=response.text,
@@ -133,9 +143,14 @@ class LLMService:
                 "temperature": temperature,
             }
 
-            response = model.generate_content(
-                prompt, generation_config=generation_config
-            )
+            if system_instruction:
+                response = model.generate_content(
+                    [system_instruction, prompt], generation_config=generation_config
+                )
+            else:
+                response = model.generate_content(
+                    prompt, generation_config=generation_config
+                )
 
             return LLMResponse(
                 content=response.text,
