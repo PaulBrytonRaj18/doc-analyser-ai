@@ -120,21 +120,15 @@ export default function Dashboard() {
       {/* Getting Started */}
       <div className="rounded-xl border border-border/50 bg-card/50 p-6">
         <h2 className="text-xl font-semibold">Quick Start</h2>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <QuickStart
             step={1}
-            title="Configure API"
-            description="Set up your API keys in Settings"
-            href="/settings"
-          />
-          <QuickStart
-            step={2}
             title="Upload Documents"
             description="Add files to start analyzing"
             href="/documents"
           />
           <QuickStart
-            step={3}
+            step={2}
             title="Ask Questions"
             description="Get AI-powered answers"
             href="/chat"

@@ -5,8 +5,6 @@ import Documents from './pages/Documents'
 import Chat from './pages/Chat'
 import Analysis from './pages/Analysis'
 import Analyze from './pages/Analyze'
-import Settings from './pages/Settings'
-
 function App() {
   return (
     <Routes>
@@ -16,7 +14,6 @@ function App() {
         <Route path="chat" element={<Chat />} />
         <Route path="analysis" element={<Analysis />} />
         <Route path="analyze" element={<Analyze />} />
-        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   )

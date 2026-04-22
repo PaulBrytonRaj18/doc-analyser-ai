@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, FileText, MessageSquare, BarChart3, Settings, Sparkles, Scan } from 'lucide-react'
+import { LayoutDashboard, FileText, MessageSquare, BarChart3, Sparkles, Scan } from 'lucide-react'
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -8,7 +8,6 @@ const navItems = [
   { path: '/chat', label: 'Chat', icon: MessageSquare },
   { path: '/analyze', label: 'Analyze', icon: Scan },
   { path: '/analysis', label: 'Analysis', icon: BarChart3 },
-  { path: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function Layout() {
