@@ -1,10 +1,12 @@
-# DocuLens AI - Production-Ready Document Analysis Platform
+# DocuLens AI — Intelligent Document Intelligence Platform
 
-> **Intelligent Document Analysis API** — Powered by FastAPI, Gemini AI, and Pinecone Vector Database
+> **Advanced OCR · RAG · Real-time Analysis** — Powered by FastAPI, Gemini AI, Pinecone, and OpenCV
 
-![Version](https://img.shields.io/badge/Version-3.1.0-009688?style=for-the-badge)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-4.0.0-7C3AED?style=for-the-badge)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-06B6D4?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python)
+![Gemini](https://img.shields.io/badge/Gemini_AI-Pro-4285F4?style=for-the-badge&logo=google)
+![Pinecone](https://img.shields.io/badge/Pinecone-Vector_DB-10B981?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 ---
@@ -12,267 +14,486 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Features](#features)
+2. [What's New in v4.0](#whats-new-in-v40)
 3. [Architecture](#architecture)
-4. [API Endpoints](#api-endpoints)
-5. [Installation](#installation)
-6. [Configuration](#configuration)
-7. [Testing](#testing)
+4. [Core Feature Modules](#core-feature-modules)
+   - [OCR Pipeline](#1-ocr-pipeline--photo-document-scanning)
+   - [Auto-Analysis Engine](#2-auto-analysis-engine)
+   - [RAG System](#3-rag-system--conversational-qa)
+   - [Document Intelligence](#4-document-intelligence-features)
+5. [API Endpoints](#api-endpoints)
+6. [Installation](#installation)
+7. [Configuration](#configuration)
 8. [Project Structure](#project-structure)
-9. [RAG System](#rag-system)
-10. [Security](#security)
-11. [Performance](#performance)
+9. [Security](#security)
+10. [Performance](#performance)
+11. [Webhooks & Events](#webhooks--events)
 12. [Troubleshooting](#troubleshooting)
+13. [Color Palette & Design System](#color-palette--design-system)
 
 ---
 
 ## Overview
 
-DocuLens AI is a **production-ready FastAPI service** that provides intelligent document analysis with:
+**DocuLens AI v4.0** is a production-grade document intelligence platform engineered around three core pillars:
 
-- **Multi-format support**: PDF, DOCX, and Images (via OCR)
-- **AI-powered analysis**: Summary generation, entity extraction, sentiment analysis
-- **RAG capabilities**: Semantic search and question answering over documents
-- **Modular architecture**: Clean separation of concerns for scalability
+- **Smart OCR Ingestion** — Upload photos of physical documents (receipts, contracts, handwritten notes, skewed scans). The preprocessing pipeline auto-corrects orientation, removes noise, and enhances contrast before OCR extraction, delivering high-accuracy text even from imperfect camera captures.
+- **Instant Auto-Analysis** — The moment a document is uploaded, a background pipeline triggers automatically: classification, summary, entity extraction, sentiment scoring, and key-insight tagging — all returned before you even ask a question.
+- **Conversational RAG Q&A** — Ask natural language questions over single or multiple documents simultaneously. Responses include pinpoint source citations (page number, bounding box, or chunk reference), confidence scores, and follow-up question suggestions.
+
+**Tech Stack**: FastAPI · Gemini AI (LLM + Embeddings) · Pinecone (Vector DB) · Redis (Cache + Job Queue) · OpenCV (Image Preprocessing) · Tesseract + EasyOCR · PyMuPDF · Celery
 
 ---
 
-## Features
+## What's New in v4.0
 
-### Core Capabilities
-
-| Feature | Description |
-|---------|-------------|
-| **Document Analysis** | Extract summary, entities, and sentiment from documents |
-| **Entity Extraction** | Identify persons, organizations, dates, locations, monetary values |
-| **Sentiment Analysis** | Classify document sentiment as positive/negative/neutral |
-| **RAG Q&A** | Ask questions in natural language with source citations |
-| **Semantic Search** | Find content by meaning, not just keywords |
-| **Async Processing** | Non-blocking document processing |
-
-### Supported Formats
-
-| Format | Handler | Description |
-|--------|---------|-------------|
-| PDF | PyMuPDF + pdfplumber | Text extraction with layout preservation |
-| DOCX | python-docx | Paragraph and table extraction |
-| Images | Tesseract/EasyOCR | OCR-based text extraction |
-| Text | Built-in | Plain text processing |
-
-### Analysis Output
-
-The `/analyze` endpoint returns a structured JSON response:
-
-```json
-{
-  "status": "success",
-  "document_id": "abc123def456",
-  "summary": "A concise 150-word summary of the document...",
-  "entities": {
-    "persons": ["John Smith", "Jane Doe"],
-    "organizations": ["Acme Corp", "Tech Inc"],
-    "dates": ["January 15, 2024", "March 2024"],
-    "locations": ["New York", "San Francisco"],
-    "monetary_values": ["$50,000", "$1.2M"]
-  },
-  "sentiment": "neutral",
-  "metadata": {
-    "file_type": "pdf",
-    "processing_time": "1.25s",
-    "num_pages": "5"
-  }
-}
-```
+| Feature | v3.1 | v4.0 |
+|---|---|---|
+| Photo-taken document OCR | Basic | Advanced pipeline with deskew, denoise, binarization |
+| Auto-analysis on upload | Manual trigger | Fully automatic, streaming response |
+| OCR confidence scoring | No | Yes — per-word and per-region |
+| Handwriting recognition | No | Yes — via EasyOCR handwriting model |
+| Multi-document RAG | No | Yes — cross-document Q&A |
+| Document classification | No | Yes — 12 document types |
+| Table extraction from images | No | Yes — structured JSON output |
+| Named entity redaction | No | Yes — PII anonymization endpoint |
+| Document comparison | No | Yes — semantic diff between two documents |
+| Batch processing | No | Yes — up to 50 documents per job |
+| Webhook notifications | No | Yes — lifecycle events |
+| Streaming responses | Partial | Full SSE streaming on all analysis endpoints |
+| Export formats | JSON only | JSON · CSV · PDF Report · Markdown |
+| Audit logging | No | Yes — per-request tamper-evident log |
+| Multi-language OCR | No | Yes — 40+ languages |
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Client Applications                       │
-│  Web App │ Mobile App │ CLI │ Third-party Integrations          │
-└────────────────────────────┬────────────────────────────────────┘
-                              │ HTTPS/REST
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      FastAPI Backend (uvicorn)                  │
-├─────────────────────────────────────────────────────────────────┤
-│  Authentication Layer                                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │ API Key     │  │ Rate Limit  │  │ CORS        │            │
-│  │ Validation  │  │ Checking    │  │ Middleware  │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-├─────────────────────────────────────────────────────────────────┤
-│  API Endpoints (v1)                                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │ /analyze    │  │ /documents  │  │ /rag        │            │
-│  │ Analysis    │  │ Ingestion   │  │ Q&A         │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-├─────────────────────────────────────────────────────────────────┤
-│  Services Layer (Modular Components)                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │ Processing  │  │ Embedding   │  │ LLM         │            │
-│  │ Service     │  │ Service     │  │ Service     │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │ Vector      │  │ Document    │  │ Cache       │            │
-│  │ Store       │  │ Service     │  │ Service     │            │
-│  └─────────────┘  └─────────────┘  └─────────────┘            │
-└────────────────────────────┬────────────────────────────────────┘
-                              │
-           ┌─────────────────┼─────────────────┐
-           ▼                 ▼                   ▼
-    ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-    │  Pinecone   │   │   Gemini    │   │   Redis     │
-    │  (Vectors)  │   │   (LLM)     │   │   (Cache)   │
-    └─────────────┘   └─────────────┘   └─────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          Client Applications                              │
+│   Web App  │  Mobile App  │  CLI  │  Webhooks  │  Third-party SDKs       │
+└─────────────────────────────────┬────────────────────────────────────────┘
+                                  │ HTTPS / SSE / WebSocket
+                                  ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        FastAPI Gateway (uvicorn)                          │
+├────────────────────────────────────────────────────────────────┬─────────┤
+│  Auth & Middleware Layer                                        │         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │ OpenAPI │
+│  │  API Key     │  │  Rate Limit  │  │  CORS +      │         │  /docs  │
+│  │  Validation  │  │  (Redis)     │  │  Audit Log   │         │         │
+│  └──────────────┘  └──────────────┘  └──────────────┘         │         │
+├────────────────────────────────────────────────────────────────┴─────────┤
+│  API Router (v1)                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ /upload  │  │ /analyze │  │ /rag     │  │ /ocr     │  │ /export  │  │
+│  │ Ingest   │  │ Auto     │  │ Q&A      │  │ Scan     │  │ Reports  │  │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                               │
+│  │ /compare │  │ /batch   │  │ /redact  │                               │
+│  │ Diff     │  │ Bulk Job │  │ PII Mask │                               │
+│  └──────────┘  └──────────┘  └──────────┘                               │
+├──────────────────────────────────────────────────────────────────────────┤
+│  Services Layer                                                           │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐          │
+│  │  OCR Pipeline   │  │  Analysis       │  │  RAG Engine     │          │
+│  │  • OpenCV Prep  │  │  Engine         │  │  • Chunker      │          │
+│  │  • Deskew       │  │  • Classifier   │  │  • Embedder     │          │
+│  │  • Denoise      │  │  • Summarizer   │  │  • Retriever    │          │
+│  │  • Tesseract    │  │  • NER          │  │  • Generator    │          │
+│  │  • EasyOCR      │  │  • Sentiment    │  │  • Citer        │          │
+│  │  • Confidence   │  │  • Insights     │  │                 │          │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘          │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐          │
+│  │  Document Store │  │  LLM Service    │  │  Export Service │          │
+│  │  • Metadata     │  │  • Gemini Pro   │  │  • PDF Report   │          │
+│  │  • Versioning   │  │  • Streaming    │  │  • CSV / JSON   │          │
+│  │  • Comparison   │  │  • Fallback     │  │  • Markdown     │          │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘          │
+└──────────────────────────────────┬───────────────────────────────────────┘
+                                   │
+          ┌──────────┬─────────────┼──────────────┬──────────────┐
+          ▼          ▼             ▼               ▼              ▼
+   ┌───────────┐ ┌────────┐ ┌──────────┐  ┌──────────────┐ ┌─────────┐
+   │ Pinecone  │ │ Gemini │ │  Redis   │  │   Celery     │ │ Postgres│
+   │ (Vectors) │ │  (LLM) │ │ (Cache + │  │ (Background  │ │ (Meta + │
+   │           │ │        │ │  Queue)  │  │  Jobs)       │ │  Audit) │
+   └───────────┘ └────────┘ └──────────┘  └──────────────┘ └─────────┘
 ```
 
-### Component Flow (Document Analysis)
+### Upload & Auto-Analysis Flow
 
 ```
-Upload File
+Upload File (Photo / PDF / DOCX / Image)
+          │
+          ▼
+┌─────────────────────────┐
+│  File Validation        │  ← Type, size, MIME check
+│  + Virus Scan Hook      │
+└────────────┬────────────┘
+             │
+     ┌───────▼──────────────┐
+     │ File Type Router     │
+     │  • Photo/Scan → OCR  │
+     │  • PDF → PyMuPDF     │
+     │  • DOCX → python-docx│
+     └───────┬──────────────┘
+             │
+     ┌───────▼──────────────────────────────┐
+     │  OCR Pre-Processing Pipeline         │  ← (Images & Scanned PDFs only)
+     │  1. Grayscale conversion             │
+     │  2. Adaptive thresholding            │
+     │  3. Deskew (Hough transform)         │
+     │  4. Denoising (FastNlMeans)          │
+     │  5. Contrast enhancement (CLAHE)     │
+     │  6. Border removal                   │
+     └───────┬──────────────────────────────┘
+             │
+     ┌───────▼──────────────────────────────┐
+     │  OCR Extraction                      │
+     │  • Tesseract (printed text)          │
+     │  • EasyOCR (handwriting / degraded)  │
+     │  • Confidence score per word/region  │
+     │  • Bounding box coordinates          │
+     │  • Language auto-detection           │
+     └───────┬──────────────────────────────┘
+             │
+     ┌───────▼────────────────────┐
+     │  Text Preprocessing        │  ← Clean, normalize, deduplicate
+     └───────┬────────────────────┘
+             │
+    ┌────────▼────────────────────────────────────────┐
+    │  Auto-Analysis Engine  (fires automatically)    │
+    │  ┌──────────────┐  ┌──────────────┐             │
+    │  │ Document     │  │ Summarizer   │             │
+    │  │ Classifier   │  │ (Gemini Pro) │             │
+    │  └──────────────┘  └──────────────┘             │
+    │  ┌──────────────┐  ┌──────────────┐             │
+    │  │ Named Entity │  │ Sentiment +  │             │
+    │  │ Recognition  │  │ Key Insights │             │
+    │  └──────────────┘  └──────────────┘             │
+    │  ┌──────────────┐  ┌──────────────┐             │
+    │  │ Table        │  │ PII Detection│             │
+    │  │ Extraction   │  │ (flag only)  │             │
+    │  └──────────────┘  └──────────────┘             │
+    └────────┬────────────────────────────────────────┘
+             │
+     ┌───────▼────────────────────┐
+     │  RAG Ingestion             │  ← Auto-chunk, embed, upsert to Pinecone
+     │  (runs in parallel)        │
+     └───────┬────────────────────┘
+             │
+     ┌───────▼────────────────────┐
+     │  Webhook Dispatch          │  ← Fires `document.ready` event
+     └───────┬────────────────────┘
+             │
+     ┌───────▼────────────────────┐
+     │  Streaming JSON Response   │  ← SSE stream with partial results
+     └────────────────────────────┘
+```
+
+---
+
+## Core Feature Modules
+
+### 1. OCR Pipeline — Photo Document Scanning
+
+DocuLens v4.0 treats camera-captured images as first-class citizens. The preprocessing chain runs before any OCR engine touches the image:
+
+**Image Preprocessing Steps**
+
+```
+Raw Photo
     │
-    ▼
-┌──────────────────┐
-│ File Validation  │ ← FileProcessor.validate_file()
-└────────┬─────────┘
-         │
-    ┌────▼─────────────┐
-    │ Type Detection   │ ← PDF/DOCX/Image detection
-    └────────┬─────────┘
-         │
-    ┌────▼──────────────────┐
-    │ Text Extraction       │ ← PDF/DOCX/Image processors
-    │ • PyMuPDF (PDF)       │
-    │ • python-docx (DOCX)  │
-    │ • Tesseract (OCR)     │
-    └────────┬───────────────┘
-         │
-    ┌────▼─────────────────────┐
-    │ Text Preprocessing       │ ← Clean and normalize
-    └────────┬─────────────────┘
-         │
-    ┌────▼─────────────────────┐
-    │ AI Processing             │ ← LLM + Fallback
-    │ • Summary Generation      │
-    │ • Entity Extraction      │
-    │ • Sentiment Analysis      │
-    └────────┬─────────────────┘
-         │
-    ┌────▼─────────────┐
-    │ JSON Response    │
-    └──────────────────┘
+    ├─► Grayscale Conversion
+    ├─► Adaptive Thresholding (handles uneven lighting from flash/shadow)
+    ├─► Deskew — Hough Line Transform corrects tilt up to ±45°
+    ├─► Denoising — FastNlMeansDenoising (preserves edge sharpness)
+    ├─► CLAHE — Contrast Limited Adaptive Histogram Equalization
+    ├─► Border Cropping — Removes camera frame noise
+    └─► Preprocessed Image → OCR Engine
+```
+
+**OCR Confidence Response**
+
+```json
+{
+  "document_id": "doc_7f3a21bc",
+  "ocr_result": {
+    "full_text": "Invoice #INV-2024-0091\nDate: March 5, 2024...",
+    "language_detected": "en",
+    "overall_confidence": 0.947,
+    "regions": [
+      {
+        "region_id": 1,
+        "text": "Invoice #INV-2024-0091",
+        "confidence": 0.991,
+        "bounding_box": { "x": 42, "y": 18, "width": 310, "height": 28 },
+        "engine_used": "tesseract"
+      },
+      {
+        "region_id": 2,
+        "text": "Handwritten note: approved by J.K.",
+        "confidence": 0.831,
+        "bounding_box": { "x": 10, "y": 580, "width": 260, "height": 22 },
+        "engine_used": "easyocr_handwriting"
+      }
+    ],
+    "low_confidence_regions": [2],
+    "preprocessing_applied": ["grayscale", "deskew", "denoise", "clahe"]
+  }
+}
+```
+
+**Supported Input**
+
+| Source | Formats | Notes |
+|--------|---------|-------|
+| Camera capture | JPG, HEIC, WEBP, PNG | Auto-deskew up to ±45° |
+| Scanned documents | TIFF, PNG, BMP | 300 DPI recommended |
+| PDF (scanned) | PDF | Rasterized per-page before OCR |
+| PDF (digital) | PDF | Text layer extracted directly |
+| Word documents | DOCX | python-docx extraction |
+| Plain text | TXT, MD | Passthrough |
+
+**Languages Supported**: 40+ via Tesseract language packs, including Tamil, Hindi, Arabic, Chinese, Japanese, and all major European languages.
+
+---
+
+### 2. Auto-Analysis Engine
+
+Every upload triggers a full analysis pipeline automatically — no separate API call required. Results stream back via Server-Sent Events (SSE) as each stage completes.
+
+**Document Classification** (12 categories)
+
+```
+invoice · contract · receipt · report · resume · legal_filing ·
+medical_record · id_document · handwritten_note · form · academic · general
+```
+
+**Full Auto-Analysis Response**
+
+```json
+{
+  "status": "success",
+  "document_id": "doc_7f3a21bc",
+  "classification": {
+    "type": "invoice",
+    "confidence": 0.96,
+    "sub_type": "commercial_invoice"
+  },
+  "summary": "A commercial invoice issued by Acme Corp to Tech Inc for software licensing services totalling $12,400, dated March 5, 2024, with payment due April 4, 2024.",
+  "key_insights": [
+    "Payment due in 30 days",
+    "Late fee clause detected: 1.5% per month",
+    "GST/Tax line item present"
+  ],
+  "entities": {
+    "persons": ["Jane Doe", "John Smith"],
+    "organizations": ["Acme Corp", "Tech Inc"],
+    "dates": ["March 5, 2024", "April 4, 2024"],
+    "locations": ["San Francisco, CA"],
+    "monetary_values": ["$12,400", "$186.00 (tax)"],
+    "invoice_numbers": ["INV-2024-0091"],
+    "email_addresses": ["billing@acmecorp.com"]
+  },
+  "sentiment": {
+    "label": "neutral",
+    "score": 0.02
+  },
+  "tables_extracted": [
+    {
+      "table_id": 1,
+      "headers": ["Item", "Qty", "Unit Price", "Total"],
+      "rows": [
+        ["Software License - Enterprise", "1", "$12,400.00", "$12,400.00"]
+      ]
+    }
+  ],
+  "pii_detected": true,
+  "pii_types": ["email_address", "person_name"],
+  "metadata": {
+    "file_type": "image/jpeg",
+    "ocr_confidence": 0.947,
+    "processing_time_ms": 2840,
+    "pages": 1,
+    "word_count": 312
+  }
+}
+```
+
+---
+
+### 3. RAG System — Conversational Q&A
+
+**Single & Multi-Document Q&A**
+
+Ask questions across a single document or an entire collection. The retriever finds the most semantically relevant chunks and the LLM generates a grounded answer with source citations.
+
+```bash
+# Single document Q&A
+POST /v1/rag/query
+{
+  "query": "What are the payment terms?",
+  "document_id": "doc_7f3a21bc"
+}
+
+# Multi-document Q&A (cross-document reasoning)
+POST /v1/rag/query
+{
+  "query": "Compare the payment terms across all uploaded invoices",
+  "document_ids": ["doc_7f3a21bc", "doc_9a1b2c3d", "doc_4e5f6a7b"]
+}
+```
+
+**RAG Response with Citations**
+
+```json
+{
+  "answer": "The payment terms specify that invoices are due within 30 days of the invoice date. A late fee of 1.5% per month applies to overdue balances, as stated in clause 4.2.",
+  "confidence": 0.93,
+  "sources": [
+    {
+      "document_id": "doc_7f3a21bc",
+      "chunk_id": "chunk_14",
+      "page": 1,
+      "region": { "x": 42, "y": 480, "width": 510, "height": 44 },
+      "excerpt": "...payment is due within thirty (30) days of invoice date...",
+      "relevance_score": 0.961
+    }
+  ],
+  "follow_up_suggestions": [
+    "What is the total amount due including late fees?",
+    "Is there an early payment discount?",
+    "Who is the billing contact for disputes?"
+  ]
+}
+```
+
+**RAG Configuration**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CHUNK_SIZE` | 800 | Tokens per chunk |
+| `CHUNK_OVERLAP` | 150 | Overlap between chunks |
+| `TOP_K_RESULTS` | 6 | Retrieved chunks per query |
+| `MIN_RELEVANCE_SCORE` | 0.65 | Minimum cosine similarity threshold |
+| `EMBEDDING_PROVIDER` | `gemini` | `gemini` / `openai` / `local` |
+| `RERANK_ENABLED` | `true` | Cross-encoder reranking of retrieved chunks |
+
+---
+
+### 4. Document Intelligence Features
+
+**Document Comparison (Semantic Diff)**
+
+```bash
+POST /v1/compare
+{
+  "document_id_a": "doc_7f3a21bc",
+  "document_id_b": "doc_9a1b2c3d",
+  "focus": "payment_terms"   # optional: narrows the diff scope
+}
+```
+
+Response highlights added, removed, and changed sections with a semantic similarity score between the two documents.
+
+**PII Redaction**
+
+```bash
+POST /v1/redact
+{
+  "document_id": "doc_7f3a21bc",
+  "pii_types": ["person_name", "email_address", "phone_number"],
+  "replacement": "[REDACTED]"
+}
+```
+
+Returns a new document with identified PII replaced. The original is preserved unless `overwrite: true` is passed.
+
+**Batch Processing**
+
+```bash
+POST /v1/batch/upload
+Content-Type: multipart/form-data
+
+files[]: contract_a.pdf
+files[]: invoice_001.jpg
+files[]: receipt_scan.png
+...  (up to 50 files)
+```
+
+Returns a `batch_id`. Poll `GET /v1/batch/{batch_id}/status` or receive results via webhook when all jobs complete.
+
+**Export**
+
+```bash
+# Export analysis report as PDF
+GET /v1/documents/{document_id}/export?format=pdf_report
+
+# Export entities as CSV
+GET /v1/documents/{document_id}/export?format=csv
+
+# Export full analysis as Markdown
+GET /v1/documents/{document_id}/export?format=markdown
 ```
 
 ---
 
 ## API Endpoints
 
-### Document Analysis
+### Upload & Ingestion
 
-#### POST /v1/analyze
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/v1/upload` | Upload file → triggers auto-analysis + RAG ingestion |
+| `POST` | `/v1/upload/stream` | Upload with SSE streaming of analysis stages |
+| `POST` | `/v1/batch/upload` | Upload up to 50 files as a batch job |
+| `GET`  | `/v1/documents` | List all ingested documents |
+| `GET`  | `/v1/documents/{id}` | Retrieve document metadata & analysis |
+| `DELETE` | `/v1/documents/{id}` | Delete document and its vectors |
 
-Analyze a document file (PDF, DOCX, or Image) and extract summary, entities, and sentiment.
+### OCR
 
-**Authentication**: Required (X-API-Key header)
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/v1/ocr/scan` | OCR a photo/image, returns text + confidence |
+| `POST` | `/v1/ocr/scan/preview` | Returns preprocessed image + OCR overlay (for UI debugging) |
+| `POST` | `/v1/ocr/languages` | Detect language in an image |
 
-**Request**:
+### Analysis
 
-```bash
-curl -X POST "http://localhost:8000/v1/analyze" \
-  -H "X-API-Key: your-api-key" \
-  -F "file=@document.pdf"
-```
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET`  | `/v1/analyze/{document_id}` | Retrieve cached auto-analysis result |
+| `POST` | `/v1/analyze/text` | Analyze raw text (no file upload) |
+| `POST` | `/v1/compare` | Semantic diff between two documents |
+| `POST` | `/v1/redact` | PII redaction on a stored document |
 
-**Response**:
+### RAG & Search
 
-```json
-{
-  "status": "success",
-  "document_id": "abc123def456",
-  "summary": "This document discusses...",
-  "entities": {
-    "persons": ["John Smith"],
-    "organizations": ["Acme Corp"],
-    "dates": ["January 15, 2024"],
-    "locations": ["New York"],
-    "monetary_values": ["$50,000"]
-  },
-  "sentiment": "neutral",
-  "metadata": {
-    "file_type": "pdf",
-    "processing_time": "1.25s",
-    "num_pages": "5"
-  }
-}
-```
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/v1/rag/query` | Natural language Q&A (single or multi-document) |
+| `POST` | `/v1/rag/search` | Semantic chunk search without generation |
+| `GET`  | `/v1/rag/history/{document_id}` | Retrieve Q&A history for a document |
 
-#### POST /v1/analyze/text
+### Export & Reporting
 
-Analyze raw text content directly.
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET`  | `/v1/documents/{id}/export` | Export analysis (pdf_report, csv, json, markdown) |
+| `GET`  | `/v1/batch/{batch_id}/export` | Export all results from a batch job |
 
-**Authentication**: Required (X-API-Key header)
+### System
 
-```bash
-curl -X POST "http://localhost:8000/v1/analyze/text" \
-  -H "X-API-Key: your-api-key" \
-  -F "text=Your document text here..."
-```
-
-### Document Ingestion (RAG)
-
-#### POST /v1/documents/ingest
-
-Ingest a document for RAG retrieval.
-
-```bash
-curl -X POST "http://localhost:8000/v1/documents/ingest" \
-  -H "X-API-Key: your-api-key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Document content...",
-    "filename": "document.pdf",
-    "file_type": "application/pdf"
-  }'
-```
-
-#### POST /v1/rag/query
-
-Query the document knowledge base.
-
-```bash
-curl -X POST "http://localhost:8000/v1/rag/query" \
-  -H "X-API-Key: your-api-key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "What are the main contract terms?"
-  }'
-```
-
-### Health Check
-
-#### GET /health
-
-```bash
-curl "http://localhost:8000/health"
-```
-
-**Response**:
-
-```json
-{
-  "status": "healthy",
-  "service": "DocuLens AI",
-  "version": "3.1.0",
-  "features": {
-    "rag": true,
-    "cache": true,
-    "streaming": true
-  }
-}
-```
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET`  | `/health` | Service health + dependency status |
+| `GET`  | `/v1/audit/logs` | Tamper-evident audit log (admin only) |
+| `GET`  | `/docs` | Swagger UI |
+| `GET`  | `/redoc` | ReDoc |
 
 ---
 
@@ -281,41 +502,57 @@ curl "http://localhost:8000/health"
 ### Prerequisites
 
 - **Python 3.11+**
-- **API Keys** (see Configuration section)
+- **Tesseract OCR** (`apt install tesseract-ocr tesseract-ocr-[lang]`)
+- **OpenCV system libs** (`apt install libgl1`)
+- **Redis 7+**
+- **PostgreSQL 15+**
+- API Keys: Gemini AI, Pinecone
 
 ### Quick Start
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/document-analyzer
-cd document-analyzer/backend
+git clone https://github.com/your-repo/doculens-ai
+cd doculens-ai
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or: venv\Scripts\activate  # Windows
+source venv/bin/activate        # Linux/Mac
+# venv\Scripts\activate         # Windows
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
-# Copy and configure environment
-cp .env.example .env
-# Edit .env with your API keys
+# Install Tesseract language packs (example: English + Tamil)
+sudo apt-get install tesseract-ocr-eng tesseract-ocr-tam
 
-# Run the server
-uvicorn app.main:app --reload --port 8000
+# Set up environment
+cp .env.example .env
+# Edit .env with your API keys and DB connection strings
+
+# Run database migrations
+alembic upgrade head
+
+# Start Redis (if not running)
+redis-server &
+
+# Start Celery worker (background job processor)
+celery -A app.worker worker --loglevel=info &
+
+# Start the API server
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Docker Setup
+### Docker Compose (Recommended)
 
 ```bash
-# Build and run with Docker
-docker-compose up -d
+cp .env.example .env
+# Edit .env
 
-# Or manually
-docker build -t doculens-backend .
-docker run -p 8000:8000 -e GEMINI_API_KEY=... doculens-backend
+docker compose up --build
 ```
+
+Services started: `api`, `celery_worker`, `redis`, `postgres`
 
 ---
 
@@ -323,111 +560,59 @@ docker run -p 8000:8000 -e GEMINI_API_KEY=... doculens-backend
 
 ### Environment Variables
 
-Create a `.env` file in the `backend/` directory:
-
 ```env
-# Application
-APP_NAME=DocuLens AI
-APP_VERSION=3.1.0
-ENVIRONMENT=development
-DEBUG=true
+# ─── Core ───────────────────────────────────────────────────────
+APP_ENV=production
+API_KEY=your-secret-api-key
+SECRET_KEY=your-jwt-secret
 
-# Server
-HOST=0.0.0.0
-PORT=8000
-LOG_LEVEL=INFO
-
-# Security (REQUIRED for production)
-API_KEY=your-secure-api-key-here
-
-# Gemini AI (REQUIRED for AI features)
+# ─── Gemini AI ──────────────────────────────────────────────────
 GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-1.5-pro
 
-# Pinecone Vector Database (REQUIRED for RAG)
+# ─── Pinecone ───────────────────────────────────────────────────
 PINECONE_API_KEY=your-pinecone-api-key
-PINECONE_INDEX_NAME=doculens-production
-PINECONE_CLOUD=aws
+PINECONE_INDEX=doculens-vectors
 PINECONE_REGION=us-east-1
 
-# Embedding Provider (gemini, openai, local)
-EMBEDDING_PROVIDER=gemini
-
-# OpenAI (alternative to Gemini)
-OPENAI_API_KEY=your-openai-api-key
-
-# Redis Cache (optional, for performance)
+# ─── Redis ──────────────────────────────────────────────────────
 REDIS_URL=redis://localhost:6379/0
-REDIS_ENABLED=true
 
-# Document Processing
-MAX_FILE_SIZE_MB=50
-SUPPORTED_FILE_TYPES=pdf,docx,txt,png,jpg,jpeg
+# ─── PostgreSQL ─────────────────────────────────────────────────
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/doculens
 
-# RAG Configuration
-CHUNK_SIZE=1000
-CHUNK_OVERLAP=200
-TOP_K_RESULTS=5
+# ─── OCR ────────────────────────────────────────────────────────
+OCR_ENGINE=auto                     # auto | tesseract | easyocr
+OCR_DEFAULT_LANGUAGE=eng
+OCR_CONFIDENCE_THRESHOLD=0.70       # Low-confidence regions flagged
+PREPROCESSING_ENABLED=true
+DESKEW_MAX_ANGLE=45
 
-# Rate Limiting
-RATE_LIMIT_REQUESTS=100
+# ─── RAG ────────────────────────────────────────────────────────
+CHUNK_SIZE=800
+CHUNK_OVERLAP=150
+TOP_K_RESULTS=6
+MIN_RELEVANCE_SCORE=0.65
+RERANK_ENABLED=true
+EMBEDDING_PROVIDER=gemini           # gemini | openai | local
+
+# ─── File Handling ──────────────────────────────────────────────
+MAX_FILE_SIZE_MB=100
+BATCH_MAX_FILES=50
+ALLOWED_EXTENSIONS=pdf,docx,txt,jpg,jpeg,png,tiff,webp,heic,bmp
+
+# ─── Rate Limiting ──────────────────────────────────────────────
+RATE_LIMIT_REQUESTS=200
 RATE_LIMIT_WINDOW_SECONDS=60
 
-# CORS
-CORS_ORIGINS=*
-```
+# ─── Webhooks ───────────────────────────────────────────────────
+WEBHOOK_SECRET=your-webhook-signing-secret
+WEBHOOK_RETRY_ATTEMPTS=3
 
-### Configuration Options
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `API_KEY` | string | - | API key for authentication |
-| `GEMINI_API_KEY` | string | - | Google Gemini API key |
-| `PINECONE_API_KEY` | string | - | Pinecone vector DB API key |
-| `EMBEDDING_PROVIDER` | enum | gemini | Embedding provider (gemini/openai/local) |
-| `MAX_FILE_SIZE_MB` | int | 50 | Maximum upload file size |
-| `CHUNK_SIZE` | int | 1000 | Text chunk size for RAG |
-| `CHUNK_OVERLAP` | int | 200 | Overlap between chunks |
-| `REDIS_URL` | string | redis://localhost:6379/0 | Redis connection URL |
-
----
-
-## Testing
-
-### Running Tests
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=app --cov-report=html
-
-# Run specific test file
-pytest tests/test_analyze.py -v
-
-# Run with specific marker
-pytest -m integration
-```
-
-### Test Categories
-
-- **Unit Tests**: Individual component testing
-- **Integration Tests**: API endpoint testing
-- **E2E Tests**: Full pipeline testing
-
-### Manual Testing
-
-```bash
-# Test health endpoint
-curl http://localhost:8000/health
-
-# Test document analysis
-curl -X POST "http://localhost:8000/v1/analyze" \
-  -H "X-API-Key: your-api-key" \
-  -F "file=@test.pdf"
-
-# Access API documentation
-open http://localhost:8000/docs
+# ─── Security ───────────────────────────────────────────────────
+CORS_ORIGINS=https://yourapp.com
+PII_DETECTION_ENABLED=true
+AUDIT_LOG_ENABLED=true
 ```
 
 ---
@@ -435,130 +620,107 @@ open http://localhost:8000/docs
 ## Project Structure
 
 ```
-document-analyzer/
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   │       ├── endpoints/
-│   │   │       │   ├── analyze.py      # POST /analyze endpoint
-│   │   │       │   ├── documents.py    # Document ingestion
-│   │   │       │   ├── rag.py          # RAG Q&A
-│   │   │       │   └── analysis.py     # Advanced analysis
-│   │   │       └── router.py
-│   │   ├── core/
-│   │   │   ├── config.py               # Configuration management
-│   │   │   ├── security.py             # API key auth, rate limiting
-│   │   │   └── logging.py              # Logging setup
-│   │   ├── models/
-│   │   │   └── schemas.py              # Pydantic models
-│   │   ├── services/
-│   │   │   ├── processing/             # Document processing
-│   │   │   │   ├── file_processor.py  # Unified file handler
-│   │   │   │   ├── pdf_processor.py   # PDF extraction
-│   │   │   │   ├── docx_processor.py  # DOCX extraction
-│   │   │   │   ├── image_processor.py # OCR/Image extraction
-│   │   │   │   ├── ai_processing.py   # Summary, NER, Sentiment
-│   │   │   │   └── text_preprocessing.py
-│   │   │   ├── document/               # Document service
-│   │   │   ├── embedding/              # Embedding service
-│   │   │   ├── vector/                 # Pinecone vector store
-│   │   │   ├── llm/                    # Gemini LLM service
-│   │   │   └── cache/                  # Redis cache
-│   │   └── main.py                     # Application entry point
-│   ├── requirements.txt
-│   └── .env.example
-│
-└── README.md
+doculens-ai/
+├── app/
+│   ├── api/
+│   │   └── v1/
+│   │       ├── endpoints/
+│   │       │   ├── upload.py           # POST /upload, /upload/stream
+│   │       │   ├── ocr.py              # POST /ocr/scan, /ocr/scan/preview
+│   │       │   ├── analyze.py          # GET /analyze/{id}, POST /analyze/text
+│   │       │   ├── rag.py              # POST /rag/query, /rag/search
+│   │       │   ├── documents.py        # CRUD on stored documents
+│   │       │   ├── compare.py          # POST /compare
+│   │       │   ├── redact.py           # POST /redact
+│   │       │   ├── batch.py            # POST /batch/upload, GET /batch/{id}
+│   │       │   ├── export.py           # GET /documents/{id}/export
+│   │       │   └── audit.py            # GET /audit/logs
+│   │       └── router.py
+│   ├── core/
+│   │   ├── config.py                   # Pydantic Settings
+│   │   ├── security.py                 # API key auth, JWT, rate limit
+│   │   ├── logging.py                  # Structured JSON logging
+│   │   └── audit.py                    # Tamper-evident audit trail
+│   ├── models/
+│   │   ├── schemas.py                  # Pydantic I/O models
+│   │   └── db.py                       # SQLAlchemy ORM models
+│   ├── services/
+│   │   ├── ocr/
+│   │   │   ├── preprocessor.py         # OpenCV image preprocessing pipeline
+│   │   │   ├── tesseract_engine.py     # Tesseract OCR wrapper
+│   │   │   ├── easyocr_engine.py       # EasyOCR (handwriting) wrapper
+│   │   │   ├── ocr_router.py           # Engine selection logic
+│   │   │   └── confidence.py           # Per-word/region confidence scoring
+│   │   ├── processing/
+│   │   │   ├── file_processor.py       # Unified file type router
+│   │   │   ├── pdf_processor.py        # PyMuPDF text + page extraction
+│   │   │   ├── docx_processor.py       # python-docx extraction
+│   │   │   └── text_preprocessing.py   # Clean, normalize, deduplicate
+│   │   ├── analysis/
+│   │   │   ├── classifier.py           # Document type classification
+│   │   │   ├── summarizer.py           # Gemini-powered summarization
+│   │   │   ├── ner.py                  # Named entity recognition
+│   │   │   ├── sentiment.py            # Sentiment + tone scoring
+│   │   │   ├── insights.py             # Key insight extraction
+│   │   │   ├── table_extractor.py      # Table detection + JSON conversion
+│   │   │   └── pii_detector.py         # PII type flagging
+│   │   ├── rag/
+│   │   │   ├── chunker.py              # Semantic text chunking
+│   │   │   ├── embedder.py             # Multi-provider embedding
+│   │   │   ├── retriever.py            # Pinecone similarity retrieval
+│   │   │   ├── reranker.py             # Cross-encoder reranking
+│   │   │   ├── generator.py            # Grounded answer generation
+│   │   │   └── citer.py                # Source citation builder
+│   │   ├── document/
+│   │   │   ├── store.py                # Document CRUD + versioning
+│   │   │   ├── comparator.py           # Semantic document diff
+│   │   │   └── redactor.py             # PII masking & anonymization
+│   │   ├── export/
+│   │   │   ├── pdf_report.py           # PDF analysis report builder
+│   │   │   ├── csv_exporter.py         # Entity/table CSV export
+│   │   │   └── markdown_exporter.py    # Markdown export
+│   │   ├── llm/
+│   │   │   ├── gemini_client.py        # Gemini API client + streaming
+│   │   │   └── fallback.py             # Graceful LLM fallback logic
+│   │   ├── cache/
+│   │   │   └── redis_cache.py          # Embedding + analysis cache
+│   │   └── webhook/
+│   │       └── dispatcher.py           # Webhook event dispatch + retry
+│   ├── worker/
+│   │   ├── celery_app.py               # Celery config
+│   │   └── tasks/
+│   │       ├── analyze_task.py         # Background auto-analysis task
+│   │       ├── batch_task.py           # Batch processing task
+│   │       └── ingest_task.py          # RAG ingestion task
+│   └── main.py                         # FastAPI app + lifespan
+├── migrations/                         # Alembic DB migrations
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── docker-compose.yml
+├── Dockerfile
+├── requirements.txt
+└── .env.example
 ```
-
-### Modular Components
-
-#### 1. Document Processing (`app/services/processing/`)
-
-- **file_processor.py**: Unified interface for all file types
-- **pdf_processor.py**: PyMuPDF-based PDF extraction
-- **docx_processor.py**: python-docx-based DOCX extraction
-- **image_processor.py**: Tesseract/EasyOCR-based OCR
-- **ai_processing.py**: Summary, entity extraction, sentiment
-- **text_preprocessing.py**: Text cleaning and normalization
-
-#### 2. RAG System (`app/services/`)
-
-- **embedding/**: Multi-provider embedding (Gemini/OpenAI/Local)
-- **vector/**: Pinecone vector database integration
-- **document/**: Document chunking and ingestion
-
-#### 3. Core Services
-
-- **llm/**: Gemini LLM integration
-- **cache/**: Redis caching for embeddings
-
----
-
-## RAG System
-
-The RAG (Retrieval-Augmented Generation) system is fully preserved and integrated:
-
-### How It Works
-
-1. **Document Ingestion**: Text is chunked and embedded
-2. **Vector Storage**: Chunks stored in Pinecone
-3. **Query Processing**: Query embedded and compared to vectors
-4. **Context Retrieval**: Top-k similar chunks retrieved
-5. **Answer Generation**: LLM generates answer with context
-
-### RAG Endpoints
-
-```bash
-# Ingest document
-POST /v1/documents/ingest
-
-# Query with RAG
-POST /v1/rag/query
-
-# Semantic search
-POST /v1/rag/search
-```
-
-### Configuration
-
-RAG behavior can be tuned via environment variables:
-
-- `CHUNK_SIZE`: Size of text chunks (default: 1000)
-- `CHUNK_OVERLAP`: Overlap between chunks (default: 200)
-- `TOP_K_RESULTS`: Number of results to retrieve (default: 5)
-- `EMBEDDING_PROVIDER`: Embedding model choice
 
 ---
 
 ## Security
 
-### API Key Authentication
+**Authentication**: All endpoints require `X-API-Key` header. Admin endpoints additionally require a scoped JWT token.
 
-All production endpoints require API key authentication:
+**Rate Limiting**: Redis-backed sliding window limiter. Default: 200 requests/60s per API key. Configurable per key tier.
 
-```bash
-curl -H "X-API-Key: your-api-key" ...
-```
+**Input Validation**: File type, MIME type, size, and filename sanitization on every upload. Malicious file detection hook available.
 
-### Rate Limiting
+**PII Handling**: PII detection is non-destructive — originals are never modified unless `/v1/redact` is explicitly called with `overwrite: true`.
 
-- Default: 100 requests per 60 seconds
-- Configurable via `RATE_LIMIT_REQUESTS` and `RATE_LIMIT_WINDOW_SECONDS`
+**Audit Logging**: Every request is logged to PostgreSQL with a SHA-256 chain hash (each entry includes the hash of the previous), making the log tamper-evident.
 
-### Input Validation
+**Secrets Management**: All API keys sourced from environment variables. Secrets are hashed (SHA-256) before being stored in logs. Never committed to source control.
 
-- File type validation (PDF, DOCX, images only)
-- File size limits (default: 50MB)
-- Content type checking
-
-### Security Best Practices
-
-- API keys stored in environment variables (never in code)
-- Secrets hashed using SHA-256
-- CORS configured for allowed origins
-- Input sanitization on all endpoints
+**CORS**: Restricted to `CORS_ORIGINS`. Wildcard (`*`) only permitted in `development` env.
 
 ---
 
@@ -568,104 +730,171 @@ curl -H "X-API-Key: your-api-key" ...
 
 | Operation | Typical Time |
 |-----------|-------------|
-| Document upload | 1-2s per page |
-| Text extraction | <500ms per page |
-| AI analysis | 2-5s |
-| Semantic search | <100ms |
-| Cache hit | <10ms |
+| Image preprocessing (OpenCV) | 80–200ms |
+| OCR extraction (Tesseract) | 300–900ms per page |
+| OCR extraction (EasyOCR) | 800ms–2s per page |
+| Auto-analysis (full pipeline) | 3–6s |
+| RAG ingestion (chunking + embed) | 1–3s per document |
+| RAG query (retrieve + generate) | 1.5–3s |
+| Semantic search only | <120ms |
+| Cache hit (embedding) | <15ms |
+| Batch job (50 docs) | ~2–4 min (Celery workers) |
 
 ### Optimization Tips
 
-1. **Enable Redis cache** for faster embedding lookups
-2. **Use async processing** for better concurrency
-3. **Configure chunk sizes** based on document type
-4. **Monitor with /health endpoint**
+- Enable Redis embedding cache (`REDIS_URL` set) to avoid redundant embedding API calls.
+- Use `upload/stream` endpoint for large files to deliver partial analysis results progressively.
+- Tune `CHUNK_SIZE` and `TOP_K_RESULTS` to balance answer quality vs. latency.
+- Scale Celery workers horizontally for batch workloads.
+- Use `RERANK_ENABLED=false` if sub-second RAG latency is critical and precision can be relaxed.
+
+---
+
+## Webhooks & Events
+
+Register a webhook URL via the API to receive lifecycle events:
+
+```bash
+POST /v1/webhooks/register
+{
+  "url": "https://yourapp.com/webhook",
+  "events": ["document.ready", "batch.complete", "rag.query.done"]
+}
+```
+
+**Available Events**
+
+| Event | Fired When |
+|-------|-----------|
+| `document.ready` | Upload processed + auto-analysis complete |
+| `document.failed` | Processing failed (includes error detail) |
+| `batch.complete` | All files in a batch job have been processed |
+| `batch.partial` | Some files completed, some failed |
+| `rag.query.done` | Async RAG query finished |
+
+All webhook payloads are signed with `HMAC-SHA256` using your `WEBHOOK_SECRET`. Failed deliveries are retried up to `WEBHOOK_RETRY_ATTEMPTS` times with exponential backoff.
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+**OCR returns garbled text from a photo**
+Cause: Poor lighting, extreme tilt, or very low resolution.
+Solution: Ensure the image is at least 150 DPI equivalent. Enable `PREPROCESSING_ENABLED=true`. For severe cases, call `/v1/ocr/scan/preview` to inspect the preprocessed image.
 
-#### 1. No text extracted from PDF
+**Auto-analysis takes more than 10 seconds**
+Cause: Cold Gemini API, large document, or Celery worker not running.
+Solution: Verify the Celery worker is active (`celery inspect active`). Use streaming endpoint `/v1/upload/stream` for progressive results during processing.
 
-**Cause**: Encrypted or scanned PDF
-**Solution**: Ensure PDF is text-based or use OCR-enabled processing
+**RAG returns low-quality answers**
+Cause: `MIN_RELEVANCE_SCORE` too low, or document not ingested.
+Solution: Raise `MIN_RELEVANCE_SCORE` to `0.72+`. Check `/v1/documents/{id}` to confirm `rag_ingested: true`.
 
-#### 2. API key authentication failing
+**Tesseract not found**
+Cause: Tesseract binary missing from PATH.
+Solution: `sudo apt-get install tesseract-ocr` and confirm with `tesseract --version`.
 
-**Cause**: Incorrect or missing API key
-**Solution**: Verify `API_KEY` in `.env` and header in request
+**Pinecone upsert errors**
+Cause: Index dimension mismatch with embedding model.
+Solution: Ensure Pinecone index was created with the correct dimension for your `EMBEDDING_PROVIDER` (Gemini: 768, OpenAI text-embedding-3-small: 1536).
 
-#### 3. RAG queries returning empty results
+**PII detected but redaction endpoint not removing all instances**
+Cause: Low-confidence OCR regions may produce variant spellings.
+Solution: Set `OCR_CONFIDENCE_THRESHOLD=0.60` to expand OCR capture, then re-run redaction.
 
-**Cause**: No documents ingested
-**Solution**: Ingest documents first using `/v1/documents/ingest`
+### HTTP Status Codes
 
-#### 4. LLM features not working
-
-**Cause**: Missing or invalid Gemini API key
-**Solution**: Verify `GEMINI_API_KEY` in `.env`
-
-#### 5. OCR not working on images
-
-**Cause**: Tesseract not installed
-**Solution**: Install Tesseract OCR or EasyOCR
-
-### Error Responses
-
-```json
-{
-  "detail": "Error message"
-}
-```
-
-Common HTTP status codes:
-- `200`: Success
-- `400`: Bad request (invalid file, empty text)
-- `401`: Unauthorized (invalid/missing API key)
-- `413`: File too large
-- `429`: Rate limit exceeded
-- `500`: Internal server error
+| Code | Meaning |
+|------|---------|
+| `200` | Success |
+| `202` | Accepted (async job queued) |
+| `400` | Bad request |
+| `401` | Invalid / missing API key |
+| `413` | File too large |
+| `415` | Unsupported file type |
+| `422` | Validation error |
+| `429` | Rate limit exceeded |
+| `500` | Internal server error |
 
 ---
 
-## API Documentation
+## Color Palette & Design System
 
-Interactive API documentation is available at:
+The following palette is recommended for any frontend built on top of this API. It is designed to communicate trust, precision, and intelligence — the three qualities users expect from a document analysis tool.
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+### Recommended Palette
+
+**Background Tier**
+
+| Role | Name | Hex |
+|------|------|-----|
+| App background | Midnight Navy | `#0B1120` |
+| Card / panel background | Deep Space | `#111827` |
+| Input / code block background | Slate Well | `#1E293B` |
+| Dividers / borders | Steel | `#334155` |
+
+**Brand & Actions**
+
+| Role | Name | Hex |
+|------|------|-----|
+| Primary brand / CTA buttons | Electric Violet | `#7C3AED` |
+| Hover state | Deep Violet | `#6D28D9` |
+| Secondary accent (links, highlights) | Cyan Pulse | `#06B6D4` |
+| Active selection / focus ring | Vivid Indigo | `#818CF8` |
+
+**Semantic / Feedback**
+
+| Role | Name | Hex |
+|------|------|-----|
+| Success / high confidence | Emerald | `#10B981` |
+| Warning / medium confidence | Amber | `#F59E0B` |
+| Error / low confidence | Rose | `#F43F5E` |
+| Info / neutral state | Sky | `#38BDF8` |
+
+**Typography**
+
+| Role | Name | Hex |
+|------|------|-----|
+| Primary text | Snow White | `#F8FAFC` |
+| Secondary text | Cool Slate | `#94A3B8` |
+| Muted / disabled | Steel Mist | `#64748B` |
+| Code / monospace | Soft Green | `#A3E635` |
+
+### Why This Palette Works for Document Intelligence
+
+The dark navy base creates a neutral, high-contrast canvas that makes scanned documents and extracted text the visual hero of the interface. Electric Violet (`#7C3AED`) is bold enough to serve as a clear call-to-action without the corporate blandness of blue — it signals AI-powered sophistication. Cyan Pulse (`#06B6D4`) maps well to OCR scanning UX (think laser-line animations). The Emerald / Amber / Rose trio gives instant, intuitive confidence-score feedback without requiring the user to read numbers.
+
+### OCR Confidence Color Mapping
+
+```
+≥ 0.90  →  Emerald   #10B981   High confidence, display as-is
+0.70–0.89 → Amber    #F59E0B   Medium confidence, soft highlight
+< 0.70  →  Rose      #F43F5E   Low confidence, flag for review
+```
 
 ---
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License — see `LICENSE` for full terms.
 
 ---
 
 ## Acknowledgments
 
-- **Google** for Gemini AI and embeddings
-- **Pinecone** for vector database
-- **FastAPI** for the async Python framework
-- **PyMuPDF** for PDF processing
-- **Tesseract** for OCR capabilities
-
----
-
-## Support
-
-For issues and questions:
-- Open an issue on GitHub
-- Check the API documentation at `/docs`
-- Review the troubleshooting section
+- **Google** — Gemini Pro LLM and embedding API
+- **Pinecone** — Vector database infrastructure
+- **FastAPI** — Async Python web framework
+- **OpenCV** — Image preprocessing pipeline
+- **Tesseract OCR** — Printed text extraction engine
+- **EasyOCR** — Handwriting and degraded document recognition
+- **PyMuPDF** — PDF page rendering and text extraction
+- **Celery** — Distributed background job processing
 
 ---
 
 <div align="center">
-  <strong>Built with ❤️ for Production</strong>
+  <strong>DocuLens AI v4.0 — See Everything Inside Your Documents</strong>
   <br>
-  <sub>DocuLens AI - Your Intelligent Document Analysis Platform</sub>
+  <sub>OCR · Auto-Analysis · Conversational RAG · Built for Production</sub>
 </div>

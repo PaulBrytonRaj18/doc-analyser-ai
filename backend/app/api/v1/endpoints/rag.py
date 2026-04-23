@@ -153,7 +153,21 @@ async def search_documents(request: RAGSearchRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/stats")
+@router.get("/history/{document_id}")
+async def get_rag_history(
+    document_id: str,
+    limit: int = 20,
+) -> dict:
+    """Get Q&A history for a document."""
+    from app.services.document.document_service import document_service
+    
+    history = document_service.get_qa_history(document_id, limit)
+    
+    return {
+        "document_id": document_id,
+        "total": len(history),
+        "history": history,
+    }
 async def get_stats():
     """Get RAG system statistics."""
     try:

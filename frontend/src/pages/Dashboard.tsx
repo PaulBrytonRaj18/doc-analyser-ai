@@ -12,12 +12,13 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [healthData, statsData] = await Promise.all([
+        const [healthData, statsDataRaw] = await Promise.all([
           systemApi.health(),
           ragApi.getStats().catch(() => ({ total_vectors: 0, dimension: 0 })),
         ])
         setHealth(healthData)
-        setStats(statsData)
+        const stats = statsDataRaw as { total_vectors: number; dimension: number }
+        setStats(stats)
       } catch (error) {
         console.error('Failed to fetch data:', error)
       } finally {

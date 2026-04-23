@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Beaker, GitCompare, Lightbulb, Loader2 } from 'lucide-react'
-import { analysisApi } from '@/services/api'
+import { analyzeApi, compareApi } from '@/services/api'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
@@ -25,11 +25,11 @@ export default function Analysis() {
     if (!query.trim()) return
     setIsLoading(true)
     try {
-      const response = await analysisApi.synthesize({ query, max_documents: 10 })
+      const response = await analyzeApi.text(query)
       setResults(response)
-      toast.success('Synthesis complete')
+      toast.success('Analysis complete')
     } catch (error) {
-      toast.error('Synthesis failed')
+      toast.error('Analysis failed')
     } finally {
       setIsLoading(false)
     }
@@ -42,11 +42,11 @@ export default function Analysis() {
     }
     setIsLoading(true)
     try {
-      const response = await analysisApi.compare({
-        document1_id: selectedDocumentIds[0],
-        document2_id: selectedDocumentIds[1],
-      })
-      setResults(response)
+      const response = await compareApi.compare(
+        selectedDocumentIds[0],
+        selectedDocumentIds[1]
+      )
+      setResults(response as unknown as Record<string, unknown>)
       toast.success('Comparison complete')
     } catch (error) {
       toast.error('Comparison failed')
@@ -62,9 +62,7 @@ export default function Analysis() {
     }
     setIsLoading(true)
     try {
-      const response = await analysisApi.extractInsights({
-        document_id: selectedDocumentIds[0],
-      })
+      const response = await analyzeApi.get(selectedDocumentIds[0])
       setResults(response)
       toast.success('Insights extracted')
     } catch (error) {

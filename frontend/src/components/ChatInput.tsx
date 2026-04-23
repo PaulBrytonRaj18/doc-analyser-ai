@@ -35,9 +35,19 @@ export default function ChatInput() {
 
     try {
       const response = await ragApi.query({ query })
+      const sources = response.sources.map((s) => ({
+        id: s.chunk_id,
+        document_id: s.document_id,
+        chunk_id: s.chunk_id,
+        filename: '',
+        score: s.relevance_score,
+        preview: s.excerpt,
+        page: s.page,
+        region: s.region,
+      }))
       updateMessage(assistantMessageId, {
         content: response.answer,
-        sources: response.sources,
+        sources,
         isLoading: false,
       })
     } catch (error) {

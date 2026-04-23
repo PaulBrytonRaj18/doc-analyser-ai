@@ -1,5 +1,5 @@
 """
-Production Configuration Management.
+Production Configuration Management - DocuLens AI v4.0
 """
 
 from functools import lru_cache
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "DocuLens AI"
-    app_version: str = "3.1.0"
+    app_version: str = "4.0.0"
     environment: str = "production"
     debug: bool = False
 
@@ -25,15 +25,22 @@ class Settings(BaseSettings):
 
     # Security
     api_key: str = "dev-key"
-    cors_origins: list[str] = ["*"]
+    secret_key: str = "change-me-in-production"
+    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+
+    # Database (PostgreSQL)
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/doculens"
+    database_pool_size: int = 20
+    database_max_overflow: int = 10
 
     # Gemini AI
     gemini_api_key: str = ""
-    gemini_api_key_env: str = ""  # Alternative env var for google-generativeai
+    gemini_api_key_env: str = ""
+    gemini_model: str = "gemini-1.5-pro"
 
     # Vector Database (Pinecone)
     pinecone_api_key: str = ""
-    pinecone_index_name: str = "doculens-production"
+    pinecone_index_name: str = "doculens-vectors"
     pinecone_cloud: str = "aws"
     pinecone_region: str = "us-east-1"
 
@@ -50,22 +57,42 @@ class Settings(BaseSettings):
     # Celery
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/2"
-    celery_enabled: bool = False
+    celery_enabled: bool = True
 
     # Document Processing
-    max_file_size_mb: int = 50
-    supported_file_types: list[str] = ["pdf", "docx", "txt", "png", "jpg", "jpeg"]
+    max_file_size_mb: int = 100
+    batch_max_files: int = 50
+    supported_file_types: list[str] = [
+        "pdf", "docx", "txt", "png", "jpg", "jpeg", "tiff", "webp", "heic", "bmp"
+    ]
+
+    # OCR Configuration
+    ocr_engine: Literal["auto", "tesseract", "easyocr"] = "auto"
+    ocr_default_language: str = "eng"
+    ocr_confidence_threshold: float = 0.70
+    preprocessing_enabled: bool = True
+    deskew_max_angle: int = 45
 
     # RAG Configuration
-    chunk_size: int = 1000
-    chunk_overlap: int = 200
-    top_k_results: int = 5
+    chunk_size: int = 800
+    chunk_overlap: int = 150
+    top_k_results: int = 6
     max_context_chunks: int = 10
+    min_relevance_score: float = 0.65
+    rerank_enabled: bool = True
     streaming_enabled: bool = True
 
     # Rate Limiting
-    rate_limit_requests: int = 100
+    rate_limit_requests: int = 200
     rate_limit_window_seconds: int = 60
+
+    # Webhooks
+    webhook_secret: str = "change-me-webhook-secret"
+    webhook_retry_attempts: int = 3
+
+    # PII & Security
+    pii_detection_enabled: bool = True
+    audit_log_enabled: bool = True
 
     @property
     def is_production(self) -> bool:
@@ -87,6 +114,10 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def cache_clear() -> None:
+    get_settings.cache_clear()
 
 
 settings = get_settings()

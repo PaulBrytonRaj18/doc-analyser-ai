@@ -6,7 +6,10 @@ export interface Document {
   total_chunks?: number
   uploaded_at?: string
   document_type?: string
+  sub_type?: string
+  classification_confidence?: number
   summary?: string
+  rag_ingested?: boolean
   tags?: string[]
   metadata?: Record<string, unknown>
 }
@@ -21,10 +24,104 @@ export interface DocumentIngestResponse {
   metadata: Document
 }
 
+export interface UploadResponse {
+  status: string
+  document_id: string
+  filename: string
+  processing_status: string
+  message?: string
+}
+
+export interface UploadStreamResponse {
+  type: string
+  document_id: string
+  step: string
+  progress: number
+  data?: any
+}
+
+export interface ClassificationResult {
+  type: string
+  sub_type?: string
+  confidence: number
+}
+
+export interface SummaryResult {
+  summary: string
+  word_count: number
+}
+
+export interface EntityResult {
+  persons: string[]
+  organizations: string[]
+  dates: string[]
+  locations: string[]
+  monetary_values: string[]
+  invoice_numbers: string[]
+  email_addresses: string[]
+  phone_numbers: string[]
+}
+
+export interface SentimentResult {
+  label: string
+  score: number
+}
+
+export interface InsightResult {
+  insights: string[]
+}
+
+export interface TableData {
+  table_id: number
+  headers: string[]
+  rows: string[][]
+  caption?: string
+}
+
+export interface TableExtractionResult {
+  tables: TableData[]
+}
+
+export interface PIIResult {
+  pii_detected: boolean
+  pii_types: string[]
+  locations: any[]
+}
+
+export interface AnalysisResult {
+  document_id: string
+  status: string
+  classification: ClassificationResult
+  summary: string
+  entities: EntityResult
+  sentiment: SentimentResult
+  key_insights: string[]
+  tables: TableData[]
+  pii_detected: boolean
+  pii_types: string[]
+  processing_time_ms: number
+}
+
+export interface BatchJobStatus {
+  batch_id: string
+  status: string
+  total_files: number
+  processed_files: number
+  failed_files: number
+  results?: Array<{
+    filename: string
+    status: string
+    error?: string
+  }>
+  created_at: string
+  completed_at?: string
+}
+
 export interface RAGQueryRequest {
   query: string
+  document_id?: string
+  document_ids?: string[]
   top_k?: number
-  max_context_chunks?: number
   filter_dict?: Record<string, unknown>
   streaming?: boolean
 }
@@ -32,25 +129,37 @@ export interface RAGQueryRequest {
 export interface SourceReference {
   id: string
   document_id: string
+  chunk_id: string
   filename: string
   score: number
   page?: number
+  region?: any
   preview: string
+}
+
+export interface Citation {
+  document_id: string
+  chunk_id: string
+  page?: number
+  region?: any
+  excerpt: string
+  relevance_score: number
 }
 
 export interface RAGQueryResponse {
   answer: string
-  sources: SourceReference[]
-  citations: Citation[]
   confidence: number
+  sources: Citation[]
+  follow_up_suggestions: string[]
   processing_time_ms: number
 }
 
-export interface Citation {
-  chunk_id: string
-  text: string
-  score: number
-  document_id: string
+export interface QAHistoryItem {
+  id: string
+  query: string
+  response: string
+  sources?: Citation[]
+  created_at: string
 }
 
 export interface SearchResult {
@@ -61,28 +170,6 @@ export interface SearchResult {
   filename?: string
   page?: number
   chunk_index?: number
-}
-
-export interface SynthesisSection {
-  title: string
-  content: string
-  confidence: number
-}
-
-export interface SynthesisResponse {
-  query: string
-  title: string
-  executive_summary: string
-  sections: SynthesisSection[]
-  source_documents: Array<{
-    document_id: string
-    filename: string
-    score: number
-  }>
-  key_findings: string[]
-  contradictions: Array<Record<string, unknown>>
-  confidence_score: number
-  processing_time_ms: number
 }
 
 export interface ComparisonResponse {
@@ -99,37 +186,46 @@ export interface ComparisonResponse {
   overall_similarity: number
   content_overlap: number
   semantic_similarity: number
-  structure_similarity: number
-  common_topics: string[]
-  unique_to_doc1: string[]
-  unique_to_doc2: string[]
+  similar_sections: Array<{
+    section1: string
+    section2: string
+    similarity: number
+  }>
   key_differences: string[]
-  conflict_areas: Array<Record<string, unknown>>
-  recommendations: string[]
   processing_time_ms: number
 }
 
-export interface InsightItem {
-  type: string
-  title: string
-  description: string
-  confidence: number
-  assigned_to?: string
-  due_date?: string
-  priority: string
+export interface RedactionRequest {
+  document_id: string
+  pii_types: string[]
+  replacement?: string
+  overwrite?: boolean
 }
 
-export interface InsightExtractionResponse {
+export interface RedactionResponse {
   document_id: string
-  filename: string
-  action_items: InsightItem[]
-  decisions: InsightItem[]
-  deadlines: InsightItem[]
-  risks: InsightItem[]
-  opportunities: InsightItem[]
-  key_metrics: InsightItem[]
-  summary: string
-  confidence_score: number
+  status: string
+  redacted_text: string
+  redactions_applied: number
+  processing_time_ms: number
+}
+
+export interface OCRResult {
+  document_id: string
+  ocr_result: {
+    full_text: string
+    language_detected: string
+    overall_confidence: number
+    regions: Array<{
+      region_id: number
+      text: string
+      confidence: number
+      bounding_box: any
+      engine_used: string
+    }>
+    low_confidence_regions: number[]
+    preprocessing_applied: string[]
+  }
   processing_time_ms: number
 }
 
@@ -142,6 +238,28 @@ export interface ChatMessage {
   isLoading?: boolean
 }
 
+export interface WebhookConfig {
+  id: string
+  url: string
+  events: string[]
+  active: boolean
+  created_at: string
+}
+
+export interface AuditLogEntry {
+  id: string
+  timestamp: string
+  request_id: string
+  user_id?: string
+  action: string
+  resource_type?: string
+  resource_id?: string
+  request_path: string
+  request_method: string
+  response_status: number
+  ip_address?: string
+}
+
 export interface HealthStatus {
   status: string
   service: string
@@ -150,5 +268,30 @@ export interface HealthStatus {
     rag: boolean
     cache: boolean
     streaming: boolean
+    ocr: boolean
+    batch: boolean
   }
+}
+
+export interface OCRRegion {
+  region_id: number
+  text: string
+  confidence: number
+  bounding_box: Record<string, number>
+  engine_used: string
+}
+
+export interface OCRResult {
+  full_text: string
+  language_detected: string
+  overall_confidence: number
+  regions: OCRRegion[]
+  low_confidence_regions: number[]
+  preprocessing_applied: string[]
+}
+
+export interface OCRScanResponse {
+  document_id: string
+  ocr_result: OCRResult
+  processing_time_ms: number
 }

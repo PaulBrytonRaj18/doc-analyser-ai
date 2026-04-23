@@ -1,23 +1,7 @@
 import { useState, useRef } from 'react'
 import { Upload, FileText, Image, FileType, Loader2, Sparkles, X, Send } from 'lucide-react'
 import { analyzeApi } from '@/services/api'
-
-interface AnalysisResult {
-  summary: string
-  entities: {
-    persons: string[]
-    organizations: string[]
-    dates: string[]
-    locations: string[]
-    monetary_values: string[]
-  }
-  sentiment: string
-  metadata: {
-    file_type: string
-    processing_time: string
-    num_pages: string
-  }
-}
+import type { AnalysisResult } from '@/types'
 
 export default function Analyze() {
   const [file, setFile] = useState<File | null>(null)
@@ -53,9 +37,9 @@ export default function Analyze() {
     try {
       let response: AnalysisResult
       if (mode === 'file') {
-        response = await analyzeApi.analyzeFile(file!)
+        response = await analyzeApi.file(file!)
       } else {
-        response = await analyzeApi.analyzeText(text)
+        response = await analyzeApi.text(text)
       }
       setResult(response)
     } catch (err: unknown) {

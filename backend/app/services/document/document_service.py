@@ -354,5 +354,66 @@ class DocumentService:
 
         return vector_store_service.delete_by_document_id(document_id)
 
+    def get_qa_history(self, document_id: str, limit: int = 20) -> list:
+        """Get Q&A history for a document (from in-memory cache for now)."""
+        if not hasattr(self, '_qa_history'):
+            self._qa_history = {}
+        
+        return self._qa_history.get(document_id, [])[:limit]
+
+    def save_qa_interaction(
+        self,
+        document_id: str,
+        query: str,
+        response: str,
+        sources: list = None,
+    ) -> None:
+        """Save a Q&A interaction to history."""
+        if not hasattr(self, '_qa_history'):
+            self._qa_history = {}
+        
+        if document_id not in self._qa_history:
+            self._qa_history[document_id] = []
+        
+        self._qa_history[document_id].append({
+            "query": query,
+            "response": response,
+            "sources": sources or [],
+            "timestamp": datetime.now().isoformat(),
+        })
+
+    def ingest_to_vector(
+        self,
+        document_id: str,
+        content: str,
+        metadata: dict = None,
+    ) -> bool:
+        """Ingest document content to vector store."""
+        try:
+            from app.services.vector.vector_store import vector_store_service
+            from app.services.embedding.embedding_service import embedding_service
+            from app.services.processing.text_preprocessing import TextPreprocessor
+
+            preprocessor = TextPreprocessor()
+            chunks = preprocessor.chunk(content)
+
+            for i, chunk in enumerate(chunks):
+                embedding = embedding_service.generate_embedding(chunk)
+                vector_store_service.upsert(
+                    vectors=[embedding],
+                    ids=[f"{document_id}_chunk_{i}"],
+                    documents=[chunk],
+                    metadata=[{
+                        "document_id": document_id,
+                        "chunk_index": i,
+                        **(metadata or {}),
+                    }],
+                )
+
+            return True
+        except Exception as e:
+            logger.error(f"Vector ingestion failed: {e}")
+            return False
+
 
 document_service = DocumentService()

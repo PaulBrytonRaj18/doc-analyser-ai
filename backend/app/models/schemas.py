@@ -3,6 +3,7 @@ Pydantic Models for API Request/Response Validation.
 """
 
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -241,5 +242,153 @@ class HealthResponse(BaseModel):
     service: str
     version: str
     features: Dict[str, bool]
+
+
+# OCR Schemas
+
+class OCRScanRequest(BaseModel):
+    language: Optional[str] = Field(None, description="Language code")
+    auto_preprocess: bool = Field(True, description="Enable preprocessing")
+
+
+class OCRRegion(BaseModel):
+    region_id: int
+    text: str
+    confidence: float
+    bounding_box: Dict[str, int] = Field(default_factory=dict)
+    engine_used: str = "tesseract"
+
+
+class OCRResult(BaseModel):
+    full_text: str
+    language_detected: str
+    overall_confidence: float
+    regions: List[OCRRegion] = Field(default_factory=list)
+    low_confidence_regions: List[int] = Field(default_factory=list)
+    preprocessing_applied: List[str] = Field(default_factory=list)
+
+
+class OCRScanResponse(BaseModel):
+    document_id: str
+    ocr_result: OCRResult
+    processing_time_ms: int
+
+
+class OCRPreviewResponse(BaseModel):
+    original_size: List[int]
+    processed_size: List[int]
+    ocr_overlay: str
+
+
+class OCRLanguagesResponse(BaseModel):
+    languages: List[Dict[str, Any]]
+
+
+# Analysis Schemas
+
+class CompareRequest(BaseModel):
+    document_id_a: str
+    document_id_b: str
+    focus: Optional[str] = None
+
+
+class CompareResponse(BaseModel):
+    document1: Dict[str, Any]
+    document2: Dict[str, Any]
+    overall_similarity: float
+    content_overlap: float
+    semantic_similarity: float
+    similar_sections: List[Dict[str, Any]]
+    key_differences: List[str]
+    processing_time_ms: int
+
+
+class RedactRequest(BaseModel):
+    document_id: str
+    pii_types: List[str] = Field(default_factory=lambda: ["person_name", "email_address"])
+    replacement: str = "[REDACTED]"
+    overwrite: bool = False
+
+
+class RedactResponse(BaseModel):
+    document_id: str
+    status: str
+    redacted_text: str
+    redactions_applied: int
+    processing_time_ms: int
+
+
+class BatchUploadRequest(BaseModel):
+    files: List[str]
+
+
+class BatchStatusResponse(BaseModel):
+    batch_id: str
+    status: str
+    total_files: int
+    processed_files: int
+    failed_files: int
+
+
+class ExportRequest(BaseModel):
+    document_id: str
+    format: str = "json"
+
+
+# Upload Schemas
+
+class UploadRequest(BaseModel):
+    auto_analyze: bool = True
+
+
+class UploadResponse(BaseModel):
+    document_id: str
+    filename: str
+    file_type: str
+    status: str
+    processing_status: str
+    analysis: Optional[Dict[str, Any]] = None
+    processing_time_ms: int
+
+
+class UploadStreamEvent(BaseModel):
+    step: str
+    progress: int
+    message: Optional[str] = None
+    document_id: Optional[str] = None
+
+
+class UploadStreamResponse(BaseModel):
+    event: str
+    data: UploadStreamEvent
+
+
+class WebhookRegisterRequest(BaseModel):
+    url: str = Field(..., description="Webhook URL")
+    events: List[str] = Field(..., description="List of events to subscribe to")
+    secret: Optional[str] = Field(None, description="Webhook secret for signing")
+    enabled: bool = Field(default=True, description="Enable/disable webhook")
+
+
+class WebhookItem(BaseModel):
+    id: str
+    url: str
+    events: List[str]
+    enabled: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class WebhookRegisterResponse(BaseModel):
+    id: str
+    url: str
+    events: List[str]
+    enabled: bool
+    created_at: datetime
+
+
+class WebhookListResponse(BaseModel):
+    total: int
+    webhooks: List[WebhookItem]
 
 
