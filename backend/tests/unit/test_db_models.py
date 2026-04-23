@@ -1,9 +1,6 @@
 """Unit Tests - Database Models"""
 
-import pytest
 import uuid
-from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 
 class TestDocumentModel:

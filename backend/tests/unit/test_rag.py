@@ -1,7 +1,5 @@
 """Unit Tests - RAG Services"""
 
-import pytest
-from unittest.mock import MagicMock
 
 
 class TestRerankerService:
@@ -75,7 +73,7 @@ class TestCitationService:
 
     def test_build_citations(self):
         """Test building multiple citations."""
-        from app.services.rag.citer import CitationService, Citation
+        from app.services.rag.citer import CitationService
 
         service = CitationService()
 
@@ -186,7 +184,7 @@ class TestVectorStoreService:
         
         # Test upsert with mock data - may fail without API key
         try:
-            result = store.upsert(
+            _ = store.upsert(
                 vectors=[[0.1] * 768],
                 ids=["test_001"],
                 documents=["Test document"],
@@ -202,6 +200,6 @@ class TestVectorStoreService:
         store = VectorStoreService()
         
         try:
-            results = store.search("test query", top_k=5)
+            _ = store.search("test query", top_k=5)
         except Exception:
             pass

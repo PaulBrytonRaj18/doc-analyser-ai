@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 # Lazy import for optional dependencies
 try:
-    import numpy as np
+    import numpy as np  # noqa: F401
 
     NUMPY_AVAILABLE = True
 except ImportError:

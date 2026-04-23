@@ -72,7 +72,7 @@ class CacheService:
         try:
             self.redis_client.ping()
             return True
-        except:
+        except Exception:
             return False
 
     def get(self, key: str) -> Optional[Any]:

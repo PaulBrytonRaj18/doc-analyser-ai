@@ -6,7 +6,7 @@ Tests all edge cases, error handling, and boundary conditions.
 
 import pytest
 import numpy as np
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import patch
 
 
 class TestOCREdgeCases:
@@ -164,7 +164,6 @@ class TestAnalysisEdgeCases:
 
     def test_all_document_types(self):
         """Test classification with all document types."""
-        from app.services.analysis.classifier import DOCUMENT_TYPES
         
         from app.services.analysis.classifier import ClassificationService
         classifier = ClassificationService()
@@ -217,9 +216,6 @@ class TestRAGEdgeCases:
         from app.services.rag.citer import CitationService
         
         citer = CitationService()
-        
-        # 10k character query
-        long_query = "a" * 10000
         
         sources = [{"document_id": "doc1", "chunk_id": "chunk1", "relevance_score": 0.9}]
         chunks = [{"id": "chunk1", "text": "test"}]

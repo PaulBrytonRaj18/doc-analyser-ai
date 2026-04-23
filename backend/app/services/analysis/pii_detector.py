@@ -3,7 +3,6 @@ PII Detection Service - DocuLens AI v4.0
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
 from app.services.llm.llm_service import LLMService
 from app.core.config import settings
 

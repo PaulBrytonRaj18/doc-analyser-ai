@@ -6,7 +6,6 @@ import secrets
 import hashlib
 import time
 from typing import Optional
-from datetime import datetime, timedelta
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader

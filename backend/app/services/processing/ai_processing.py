@@ -6,7 +6,6 @@ import json
 import re
 from typing import Dict, Any
 
-from app.core.config import settings
 from app.core.logging import get_logger
 from app.services.llm.llm_service import llm_service
 

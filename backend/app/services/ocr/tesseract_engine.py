@@ -154,7 +154,7 @@ class TesseractEngine:
                 low_confidence_regions=low_conf_ids,
             )
 
-        except Exception as e:
+        except Exception:
             return TesseractResult(
                 full_text="",
                 language_detected=lang,
@@ -171,7 +171,7 @@ class TesseractEngine:
         """Detect language in image."""
         try:
             # Use Tesseract's language detection
-            langs = pytesseract.get_languages(config='')
+            _ = pytesseract.get_languages(config='')
             
             # For now, return default
             return default_lang

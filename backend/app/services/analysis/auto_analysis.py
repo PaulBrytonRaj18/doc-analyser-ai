@@ -3,10 +3,8 @@ Auto-Analysis Service - DocuLens AI v4.0
 Runs complete analysis pipeline on document upload
 """
 
-import uuid
 import time
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 from app.core.config import settings
 from app.services.analysis import (
@@ -118,7 +116,7 @@ class AutoAnalysisService:
         """Queue analysis to Celery."""
         from app.worker.tasks.analyze import run_analysis
         
-        task = run_analysis.apply_async(args=[document_id, text])
+        run_analysis.apply_async(args=[document_id, text])
         
         return AutoAnalysisResult(
             document_id=document_id,

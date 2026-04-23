@@ -7,7 +7,6 @@ import os
 import sys
 from pathlib import Path
 from typing import AsyncGenerator, Generator
-from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio

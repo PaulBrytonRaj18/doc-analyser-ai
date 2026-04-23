@@ -5,7 +5,6 @@ Image Processing Service with OCR support.
 import io
 from typing import Tuple
 
-from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -46,7 +45,6 @@ def _check_easyocr():
     global _easyocr
     if _easyocr is None:
         try:
-            import easyocr
 
             _easyocr = True
         except Exception:

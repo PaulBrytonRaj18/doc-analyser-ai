@@ -6,7 +6,7 @@ OpenCV-based image preprocessing for OCR enhancement
 import cv2
 import numpy as np
 from dataclasses import dataclass
-from typing import Optional, Tuple, List
+from typing import Optional, List
 
 from app.core.config import settings
 

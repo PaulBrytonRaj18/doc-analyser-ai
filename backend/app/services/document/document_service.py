@@ -17,12 +17,12 @@ logger = get_logger(__name__)
 
 def _get_vector_store():
     from app.services.vector.vector_store import (
-        DocumentChunk,
         generate_document_id,
         generate_chunk_id,
     )
+    from app.models.db import DocumentChunk as DbDocumentChunk
 
-    return DocumentChunk, generate_document_id, generate_chunk_id
+    return generate_document_id, generate_chunk_id, DbDocumentChunk
 
 
 def _get_embedding_service():
@@ -86,7 +86,7 @@ class DocumentChunker:
         document_id: str,
         metadata: Optional[dict] = None,
         strategy: str = "recursive",
-    ) -> list[DocumentChunk]:
+    ):
         """Chunk text into smaller pieces."""
         if not text or not text.strip():
             return []

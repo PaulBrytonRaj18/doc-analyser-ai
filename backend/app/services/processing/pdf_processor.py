@@ -3,7 +3,7 @@ PDF Processing Service using PyMuPDF and pdfplumber.
 """
 
 import io
-from typing import Tuple, Optional
+from typing import Tuple
 
 from app.core.logging import get_logger
 

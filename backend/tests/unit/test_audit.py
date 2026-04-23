@@ -1,9 +1,6 @@
 """Unit Tests - Audit Logging"""
 
-import hashlib
-import json
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock
 
 
 class TestAuditLogger:

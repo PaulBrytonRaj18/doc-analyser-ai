@@ -2,12 +2,10 @@
 RAG (Retrieval-Augmented Generation) API Endpoints.
 """
 
+import hashlib
 import json
-from typing import Optional, AsyncIterator
-from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import (
     RAGQueryRequest,
@@ -15,7 +13,6 @@ from app.models.schemas import (
     RAGSearchRequest,
     RAGSearchResponse,
     SourceReference,
-    Citation,
 )
 from app.services.vector.vector_store import vector_store_service
 from app.services.embedding.embedding_service import embedding_service
@@ -242,6 +239,3 @@ def _build_context(results: list, max_chunks: int) -> str:
         current_length += len(result.content) + 100
 
     return "\n\n".join(context_parts)
-
-
-import hashlib

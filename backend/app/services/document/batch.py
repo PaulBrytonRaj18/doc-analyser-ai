@@ -60,7 +60,9 @@ class BatchProcessor:
         """Process batch of files."""
         if trigger_celery and settings.celery_enabled:
             from app.worker.tasks.batch import upload_batch
-            task = upload_batch.apply_async(args=[batch_id, files_data])
+            
+            upload_batch.apply_async(args=[batch_id, files_data])
+            
             return BatchJobStatus(
                 batch_id=batch_id,
                 status="queued",

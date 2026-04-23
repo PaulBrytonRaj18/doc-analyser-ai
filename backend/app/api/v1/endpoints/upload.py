@@ -6,18 +6,14 @@ Upload with auto-analysis trigger
 import io
 import time
 import uuid
-from typing import List, Optional
 
 import numpy as np
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.core.config import settings
-from app.core.security import verify_api_key
 from app.models.schemas import (
-    UploadRequest,
     UploadResponse,
-    UploadStreamResponse,
 )
 
 
@@ -126,7 +122,6 @@ async def upload_file_stream(
     
     Streams progress as each stage completes.
     """
-    from fastapi import FastAPI
     import sse_starlette as sse
     
     async def event_generator():

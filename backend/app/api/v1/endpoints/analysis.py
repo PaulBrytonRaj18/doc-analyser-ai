@@ -4,9 +4,8 @@ Advanced Analysis API Endpoints (Synthesis, Comparison, Insights).
 
 import json
 from typing import Optional
-from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import (
     SynthesisRequest,
@@ -15,7 +14,6 @@ from app.models.schemas import (
     ComparisonResponse,
     InsightExtractionRequest,
     InsightExtractionResponse,
-    InsightReportResponse,
 )
 from app.services.vector.vector_store import vector_store_service
 from app.services.embedding.embedding_service import embedding_service

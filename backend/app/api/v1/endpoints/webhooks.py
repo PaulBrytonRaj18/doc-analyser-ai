@@ -4,7 +4,6 @@ Webhook API Endpoints - DocuLens AI v4.0
 
 import uuid
 from datetime import datetime
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 

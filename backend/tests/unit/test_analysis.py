@@ -1,7 +1,5 @@
 """Unit Tests - Analysis Services"""
 
-import pytest
-from unittest.mock import MagicMock, patch
 
 
 class TestClassificationService:
@@ -221,7 +219,6 @@ class TestPIIDetector:
 
     def test_pii_types_list(self):
         """Test PII types that can be detected."""
-        from app.services.analysis.pii_detector import PIIDetector
 
         expected_types = [
             "person_name",

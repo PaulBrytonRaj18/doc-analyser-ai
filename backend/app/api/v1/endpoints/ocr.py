@@ -12,9 +12,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile, Form
 from PIL import Image
 
 from app.core.config import settings
-from app.core.security import verify_api_key
 from app.models.schemas import (
-    OCRScanRequest,
     OCRScanResponse,
     OCRLanguagesResponse,
     OCRPreviewResponse,
@@ -139,8 +137,8 @@ async def ocr_detect_languages(
         lang_detected = [DetectedLanguage("en", 0.5)]
     
     languages = [
-        {"language": l.language, "confidence": l.confidence}
-        for l in lang_detected
+        {"language": lang.language, "confidence": lang.confidence}
+        for lang in lang_detected
     ]
     
     return OCRLanguagesResponse(languages=languages)

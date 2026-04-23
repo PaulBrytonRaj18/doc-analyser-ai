@@ -9,8 +9,8 @@ from typing import Optional, List, Union
 
 from app.core.config import settings
 from app.services.ocr.preprocessor import ImagePreprocessor, PreprocessingResult
-from app.services.ocr.tesseract_engine import TesseractEngine, TesseractResult
-from app.services.ocr.easyocr_engine import EasyOCREngine, EasyOCRResult
+from app.services.ocr.tesseract_engine import TesseractEngine
+from app.services.ocr.easyocr_engine import EasyOCREngine
 
 
 @dataclass

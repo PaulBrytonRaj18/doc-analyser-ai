@@ -3,7 +3,7 @@ Vector Store Service - Pinecone Integration (Optional).
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Any, List
+from typing import Optional, List
 from uuid import uuid4
 
 from app.core.config import settings

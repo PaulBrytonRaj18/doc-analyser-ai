@@ -4,10 +4,8 @@ Document Management API Endpoints.
 
 import json
 from typing import Optional
-from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Query, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, UploadFile, File, Query
 
 from app.models.schemas import (
     DocumentIngestRequest,
@@ -17,12 +15,9 @@ from app.models.schemas import (
     DocumentDeleteResponse,
     DocumentAnalysisRequest,
     DocumentAnalysisResponse,
-    HealthResponse,
 )
 from app.services.document.document_service import document_service
 from app.services.llm.llm_service import llm_service
-from app.services.vector.vector_store import vector_store_service
-from app.services.cache.cache_service import cache_service
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)

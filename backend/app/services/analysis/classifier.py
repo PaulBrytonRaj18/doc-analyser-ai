@@ -6,7 +6,6 @@ Document Classification Service - DocuLens AI v4.0
 from dataclasses import dataclass
 from typing import Optional
 
-from app.core.config import settings
 from app.services.llm.llm_service import LLMService
 
 

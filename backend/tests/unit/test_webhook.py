@@ -1,8 +1,6 @@
 """Unit Tests - Webhook System"""
 
-import json
 import pytest
-import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -231,7 +229,6 @@ class TestWebhookDispatcherDispatch:
     async def test_dispatch_no_webhooks_configured(self):
         """Test dispatch when no webhooks exist for event."""
         from app.services.webhook import WebhookDispatcher
-        from app.models.db import Webhook
 
         mock_db = AsyncMock()
 
@@ -252,7 +249,6 @@ class TestWebhookDispatcherDispatch:
     async def test_dispatch_builds_correct_payload(self):
         """Test dispatch builds correct payload structure."""
         from app.services.webhook import WebhookDispatcher
-        from app.models.db import Webhook
 
         mock_db = AsyncMock()
 
@@ -289,7 +285,6 @@ class TestWebhookDispatcherRetryLogic:
     async def test_dispatch_retry_on_failure(self):
         """Test retry logic triggers on HTTP error."""
         from app.services.webhook import WebhookDispatcher
-        from app.services.webhook.dispatcher import RetryState
         from app.models.db import Webhook
         from app.core.config import settings
 

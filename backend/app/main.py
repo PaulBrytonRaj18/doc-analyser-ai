@@ -2,7 +2,6 @@
 FastAPI Application Entry Point - DocuLens AI Backend.
 """
 
-import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +10,6 @@ from dotenv import load_dotenv
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
-from app.core.security import verify_api_key
 from app.api.v1.router import api_router
 from app.services.vector.vector_store import vector_store_service
 from app.services.cache.cache_service import cache_service

@@ -4,7 +4,6 @@ Handles PDF, DOCX, and Image files.
 """
 
 import io
-import hashlib
 import mimetypes
 from typing import Tuple, Optional
 

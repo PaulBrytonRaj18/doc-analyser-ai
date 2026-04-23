@@ -3,7 +3,7 @@ Markdown Exporter - DocuLens AI v4.0
 """
 
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 
 class MarkdownExporter:
@@ -15,7 +15,7 @@ class MarkdownExporter:
         document_metadata: Dict[str, Any],
     ) -> str:
         """Export to Markdown."""
-        md = f"# Document Analysis Report\n\n"
+        md = "# Document Analysis Report\n\n"
         md += f"**Document:** {document_metadata.get('filename', 'Unknown')}\n"
         md += f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
         md += "---\n\n"

@@ -4,7 +4,7 @@ PDF Report Generator - DocuLens AI v4.0
 
 import io
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 
 class PDFExporter:
@@ -21,12 +21,10 @@ class PDFExporter:
             from reportlab.lib.pagesizes import letter
             from reportlab.lib.styles import getSampleStyleSheet
             from reportlab.lib.units import inch
-            from reportlab.platypus import (
+            from reportlab.platypus import (  # noqa: F401
                 SimpleDocTemplate,
                 Paragraph,
                 Spacer,
-                Table,
-                TableStyle,
             )
             from reportlab.lib import colors
 
@@ -83,8 +81,8 @@ class PDFExporter:
         document_metadata: Dict[str, Any],
     ) -> bytes:
         """Simple text export as fallback."""
-        content = f"Document Analysis Report\n"
-        content += f"=" * 50 + "\n\n"
+        content = "Document Analysis Report\n"
+        content += "=" * 50 + "\n\n"
         content += f"Document: {document_metadata.get('filename', 'Unknown')}\n"
         content += f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
 

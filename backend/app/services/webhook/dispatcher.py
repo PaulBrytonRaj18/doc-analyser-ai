@@ -13,7 +13,7 @@ from typing import Any
 from uuid import UUID
 
 import httpx
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -102,7 +102,7 @@ class WebhookDispatcher:
             logger.warning(f"Unknown webhook event: {event}")
             return {"status": "error", "message": f"Unknown event: {event}"}
 
-        query = select(Webhook).where(Webhook.active == True)
+        query = select(Webhook).where(Webhook.active)
         if webhook_ids:
             query = query.where(Webhook.id.in_(webhook_ids))
         else:

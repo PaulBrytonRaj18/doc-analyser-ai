@@ -6,23 +6,16 @@ Main entry point for document analysis (PDF, DOCX, Images).
 import time
 import hashlib
 from typing import Optional
-from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Header
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 
 from app.models.schemas import (
     DocumentAnalysisResponse,
     EntityExtraction,
     AnalysisMetadata,
-    DocumentAnalyzeRequest,
 )
 from app.services.processing import file_processor, ai_processing_service
 from app.services.processing.text_preprocessing import text_preprocessor
-from app.services.document.document_service import document_service
-from app.services.vector.vector_store import vector_store_service
-from app.services.embedding.embedding_service import embedding_service
-from app.core.config import settings
 from app.core.security import verify_api_key
 from app.core.logging import get_logger
 

@@ -1,7 +1,5 @@
 """Unit Tests - Phase 3 Services"""
 
-import pytest
-from unittest.mock import MagicMock
 
 
 class TestRedactorService:
@@ -108,7 +106,6 @@ class TestBatchProcessor:
     def test_max_files_validation(self):
         """Test max files limit."""
         from app.services.document.batch import BatchProcessor
-        from app.core.config import settings
 
         processor = BatchProcessor()
         

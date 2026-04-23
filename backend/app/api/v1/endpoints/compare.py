@@ -2,21 +2,14 @@
 Analysis Endpoints - DocuLens AI v4.0
 """
 
-import time
 import uuid
 from typing import Optional
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Form, HTTPException
 
-from app.core.config import settings
-from app.core.security import verify_api_key
 from app.models.schemas import (
-    CompareRequest,
     CompareResponse,
     RedactRequest,
     RedactResponse,
-    BatchUploadRequest,
-    BatchStatusResponse,
-    ExportRequest,
 )
 
 

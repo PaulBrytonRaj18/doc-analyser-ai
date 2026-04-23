@@ -125,7 +125,7 @@ class EasyOCREngine:
                 low_confidence_regions=low_conf_ids,
             )
 
-        except Exception as e:
+        except Exception:
             return EasyOCRResult(
                 full_text="",
                 language_detected=language or self.lang[0],
